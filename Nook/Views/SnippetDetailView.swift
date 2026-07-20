@@ -50,7 +50,7 @@ struct SnippetDetailView: View {
 
                 Divider()
 
-                // Code-Block
+                // Code-Block mit Syntax Highlighting
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text("Code")
@@ -69,14 +69,7 @@ struct SnippetDetailView: View {
                         .foregroundStyle(.secondary)
                     }
 
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        Text(snippet.code)
-                            .font(.system(.body, design: .monospaced))
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .background(.quaternary)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    CodeHighlightView(code: snippet.code, language: snippet.language)
                 }
 
                 // Beschreibung

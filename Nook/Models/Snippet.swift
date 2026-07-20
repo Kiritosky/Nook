@@ -28,6 +28,20 @@ enum Language: String, CaseIterable, Codable {
         case .other:      return "doc"
         }
     }
+
+    // Highlight.js Sprachbezeichner
+    var highlightName: String {
+        switch self {
+        case .python:     return "python"
+        case .javascript: return "javascript"
+        case .swift:      return "swift"
+        case .sql:        return "sql"
+        case .html:       return "xml"
+        case .css:        return "css"
+        case .bash:       return "bash"
+        case .other:      return "plaintext"
+        }
+    }
 }
 
 @Model
