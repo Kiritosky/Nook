@@ -4,16 +4,21 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SnippetDetailView: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var snippet: Snippet
+
+    @State private var bearbeitenAnzeigen = false
+    @State private var loeschenBestaetigen = false
 
     private let schwierigkeitLabels = ["", "Anfänger", "Mittel", "Fortgeschritten"]
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Kopfbereich mit Titel, Tags und Favoriten-Button
+                // Kopfbereich
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(snippet.title)
@@ -45,7 +50,7 @@ struct SnippetDetailView: View {
 
                 Divider()
 
-                // Code-Block mit Kopieren-Button
+                // Code-Block
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text("Code")
@@ -125,10 +130,41 @@ struct SnippetDetailView: View {
             }
             .padding(24)
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    bearbeitenAnzeigen = true
+                } label: {
+                    Label("Bearbeiten", systemImage: "pencil")
+                }
+            }
+            ToolbarItem(placement: .destructiveAction) {
+                Button(role: .destructive) {
+                    loeschenBestaetigen = true
+                } label: {
+                    Label("Löschen", systemImage: "trash")
+                }
+            }
+        }
+        .sheet(isPresented: $bearbeitenAnzeigen) {
+            EditSnippetView(snippet: snippet)
+        }
+        .confirmationDialog(
+            "Snippet löschen?",
+            isPresented: $loeschenBestaetigen,
+            titleVisibility: .visible
+        ) {
+            Button("Löschen", role: .destructive) {
+                modelContext.delete(snippet)
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text("\"\(snippet.title)\" wird unwiderruflich gelöscht.")
+        }
     }
 }
 
-// Wiederverwendbare Tag-Pille (wird auch in SnippetListView genutzt)
+// Wiederverwendbare Tag-Pille
 struct TagPill: View {
     let text: String
     let farbe: Color
