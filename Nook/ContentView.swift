@@ -9,51 +9,37 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @State private var sidebarAuswahl: SidebarItem? = .alle
+    @State private var selectedSnippet: Snippet?
+    @State private var addSnippetAnzeigen = false
 
     var body: some View {
         NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
+            SidebarView(auswahl: $sidebarAuswahl)
+        } content: {
+            SnippetListView(
+                sidebarItem: sidebarAuswahl ?? .alle,
+                selectedSnippet: $selectedSnippet,
+                addSnippetAnzeigen: $addSnippetAnzeigen
+            )
         } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            if let snippet = selectedSnippet {
+                SnippetDetailView(snippet: snippet)
+            } else {
+                ContentUnavailableView(
+                    "Kein Snippet ausgewählt",
+                    systemImage: "doc.text",
+                    description: Text("Wähle ein Snippet aus der Liste aus.")
+                )
             }
+        }
+        .sheet(isPresented: $addSnippetAnzeigen) {
+            AddSnippetView()
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: Snippet.self, inMemory: true)
 }
