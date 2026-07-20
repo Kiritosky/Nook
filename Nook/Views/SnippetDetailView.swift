@@ -12,6 +12,7 @@ struct SnippetDetailView: View {
 
     @State private var bearbeitenAnzeigen = false
     @State private var loeschenBestaetigen = false
+    @State private var kodeCopied = false
 
     private let schwierigkeitLabels = ["", "Anfänger", "Mittel", "Fortgeschritten"]
 
@@ -50,7 +51,7 @@ struct SnippetDetailView: View {
 
                 Divider()
 
-                // Code-Block mit Syntax Highlighting
+                // Code-Block mit Syntax Highlighting und Copy-Toast
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Text("Code")
@@ -59,14 +60,18 @@ struct SnippetDetailView: View {
                             .foregroundStyle(.secondary)
                         Spacer()
                         Button {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(snippet.code, forType: .string)
+                            kopieren()
                         } label: {
-                            Label("Kopieren", systemImage: "doc.on.doc")
-                                .font(.caption)
+                            Label(
+                                kodeCopied ? "Kopiert!" : "Kopieren",
+                                systemImage: kodeCopied ? "checkmark" : "doc.on.doc"
+                            )
+                            .font(.caption)
+                            .foregroundStyle(kodeCopied ? .green : .secondary)
+                            .animation(.easeInOut(duration: 0.2), value: kodeCopied)
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
+                        .keyboardShortcut("c", modifiers: [.command, .shift])
                     }
 
                     CodeHighlightView(code: snippet.code, language: snippet.language)
@@ -130,6 +135,7 @@ struct SnippetDetailView: View {
                 } label: {
                     Label("Bearbeiten", systemImage: "pencil")
                 }
+                .keyboardShortcut("e", modifiers: .command)
             }
             ToolbarItem(placement: .destructiveAction) {
                 Button(role: .destructive) {
@@ -155,20 +161,14 @@ struct SnippetDetailView: View {
             Text("\"\(snippet.title)\" wird unwiderruflich gelöscht.")
         }
     }
-}
 
-// Wiederverwendbare Tag-Pille
-struct TagPill: View {
-    let text: String
-    let farbe: Color
-
-    var body: some View {
-        Text(text)
-            .font(.caption)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(farbe.opacity(0.15))
-            .foregroundStyle(farbe)
-            .clipShape(Capsule())
+    private func kopieren() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(snippet.code, forType: .string)
+        kodeCopied = true
+        Task {
+            try? await Task.sleep(for: .seconds(1.5))
+            kodeCopied = false
+        }
     }
 }

@@ -6,37 +6,70 @@
 import SwiftUI
 import SwiftData
 
+enum Sortierung: String, CaseIterable {
+    case neueste  = "neueste"
+    case aelteste = "aelteste"
+    case titel    = "titel"
+
+    var bezeichnung: String {
+        switch self {
+        case .neueste:  return "Neueste zuerst"
+        case .aelteste: return "Älteste zuerst"
+        case .titel:    return "Nach Titel"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .neueste:  return "clock.arrow.trianglehead.counterclockwise.rotate.90"
+        case .aelteste: return "clock"
+        case .titel:    return "textformat"
+        }
+    }
+}
+
 struct SnippetListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Snippet.createdAt, order: .reverse) private var alleSnippets: [Snippet]
+    @Query private var alleSnippets: [Snippet]
 
     let sidebarItem: SidebarItem
     @Binding var selectedSnippet: Snippet?
     @Binding var addSnippetAnzeigen: Bool
 
     @State private var suchtext = ""
-    @State private var schwierigkeitsFilter: Int? = nil  // nil = alle
+    @State private var schwierigkeitsFilter: Int? = nil
+    @AppStorage("snippetSortierung") private var sortierung: Sortierung = .neueste
 
     private var basisSnippets: [Snippet] {
+        let gefiltert: [Snippet]
         switch sidebarItem {
         case .alle:
-            return alleSnippets
+            gefiltert = alleSnippets
         case .favoriten:
-            return alleSnippets.filter { $0.isFavorite }
+            gefiltert = alleSnippets.filter { $0.isFavorite }
         case .sprache(let lang):
-            return alleSnippets.filter { $0.language == lang }
+            gefiltert = alleSnippets.filter { $0.language == lang }
         case .projekt(let proj):
-            return alleSnippets.filter { $0.project == proj }
+            gefiltert = alleSnippets.filter { $0.project == proj }
+        }
+
+        switch sortierung {
+        case .neueste:
+            return gefiltert.sorted { $0.createdAt > $1.createdAt }
+        case .aelteste:
+            return gefiltert.sorted { $0.createdAt < $1.createdAt }
+        case .titel:
+            return gefiltert.sorted {
+                $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+            }
         }
     }
 
     private var gefilterteSnippets: [Snippet] {
         var ergebnis = basisSnippets
-
         if let schwierigkeit = schwierigkeitsFilter {
             ergebnis = ergebnis.filter { $0.difficulty == schwierigkeit }
         }
-
         guard !suchtext.isEmpty else { return ergebnis }
         return ergebnis.filter {
             $0.title.localizedCaseInsensitiveContains(suchtext) ||
@@ -115,6 +148,18 @@ struct SnippetListView: View {
                 } label: {
                     Label("Snippet hinzufügen", systemImage: "plus")
                 }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+            ToolbarItem(placement: .secondaryAction) {
+                Menu {
+                    Picker("Sortierung", selection: $sortierung) {
+                        ForEach(Sortierung.allCases, id: \.self) { s in
+                            Label(s.bezeichnung, systemImage: s.symbolName).tag(s)
+                        }
+                    }
+                } label: {
+                    Label("Sortierung", systemImage: "arrow.up.arrow.down")
+                }
             }
         }
     }
@@ -126,27 +171,6 @@ struct SnippetListView: View {
         case .sprache(let lang): return lang.rawValue
         case .projekt(let proj): return proj
         }
-    }
-}
-
-// Filter-Chip für die Filter-Leiste
-struct FilterChip: View {
-    let label: String
-    let aktiv: Bool
-    let aktion: () -> Void
-
-    var body: some View {
-        Button(action: aktion) {
-            Text(label)
-                .font(.caption)
-                .fontWeight(aktiv ? .semibold : .regular)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(aktiv ? Color.accentColor : Color.secondary.opacity(0.15))
-                .foregroundStyle(aktiv ? .white : .primary)
-                .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
     }
 }
 

@@ -26,7 +26,9 @@ struct NookApp: App {
     var body: some Scene {
         WindowGroup(id: "hauptfenster") {
             ContentView()
+                .frame(minWidth: 820, minHeight: 520)
         }
+        .defaultSize(width: 1100, height: 720)
         .modelContainer(sharedModelContainer)
 
         MenuBarExtra("Nook", systemImage: "doc.text") {
