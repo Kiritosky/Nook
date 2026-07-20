@@ -35,39 +35,65 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: $auswahl) {
-            Section("Bibliothek") {
-                Label("Alle Snippets", systemImage: "square.stack")
+            // MARK: Bibliothek
+            Section {
+                SidebarZeile(symbol: "square.stack.3d.up.fill", farbe: .blue,
+                             titel: "Alle Snippets", anzahl: anzahl(.alle))
                     .tag(SidebarItem.alle)
-                    .badge(anzahl(.alle))
-                Label("Favoriten", systemImage: "star")
+
+                SidebarZeile(symbol: "star.fill", farbe: .yellow,
+                             titel: "Favoriten", anzahl: anzahl(.favoriten))
                     .tag(SidebarItem.favoriten)
-                    .badge(anzahl(.favoriten))
+            } header: {
+                Text("Bibliothek")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.8)
             }
 
-            Section("Sprachen") {
+            // MARK: Sprachen
+            Section {
                 ForEach(Language.allCases, id: \.self) { sprache in
-                    Label(sprache.rawValue, systemImage: sprache.symbolName)
+                    SidebarZeile(symbol: sprache.symbolName, farbe: sprache.farbe,
+                                 titel: sprache.rawValue, anzahl: anzahl(.sprache(sprache)))
                         .tag(SidebarItem.sprache(sprache))
-                        .badge(anzahl(.sprache(sprache)))
                 }
                 ForEach(customLanguages) { lang in
-                    Label(lang.name, systemImage: lang.symbolName)
+                    SidebarZeile(symbol: lang.symbolName, farbe: .indigo,
+                                 titel: lang.name, anzahl: anzahl(.customSprache(lang.name)))
                         .tag(SidebarItem.customSprache(lang.name))
-                        .badge(anzahl(.customSprache(lang.name)))
                 }
+            } header: {
+                Text("Sprachen")
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.8)
             }
 
+            // MARK: Projekte
             if !projekte.isEmpty {
-                Section("Projekte") {
+                Section {
                     ForEach(projekte, id: \.self) { projekt in
-                        Label(projekt, systemImage: "folder")
+                        SidebarZeile(symbol: "folder.fill", farbe: .brown,
+                                     titel: projekt, anzahl: anzahl(.projekt(projekt)))
                             .tag(SidebarItem.projekt(projekt))
-                            .badge(anzahl(.projekt(projekt)))
                     }
+                } header: {
+                    Text("Projekte")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                        .textCase(.uppercase)
+                        .tracking(0.8)
                 }
             }
         }
+        .listStyle(.sidebar)
         .navigationTitle("Nook")
-        .navigationSplitViewColumnWidth(min: 185, ideal: 215)
+        .navigationSplitViewColumnWidth(min: 200, ideal: 220)
     }
 }

@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import SwiftUI
 import SwiftData
 
 enum Language: String, CaseIterable, Codable {
@@ -41,6 +42,19 @@ enum Language: String, CaseIterable, Codable {
         case .other:      return "plaintext"
         }
     }
+
+    var farbe: Color {
+        switch self {
+        case .python:     return Color(hex: "3776AB")
+        case .javascript: return Color(hex: "F7DF1E")
+        case .swift:      return Color(hex: "F05138")
+        case .sql:        return Color(hex: "336791")
+        case .html:       return Color(hex: "E34F26")
+        case .css:        return Color(hex: "1572B6")
+        case .bash:       return Color(hex: "4EAA25")
+        case .other:      return Color(hex: "6C7086")
+        }
+    }
 }
 
 @Model
@@ -61,14 +75,17 @@ class Snippet {
     var languageOverride: String?
     var customHighlightName: String?
 
-    // Angezeigter Sprachname (built-in oder custom)
     var effectiveLanguageName: String {
         languageOverride ?? language.rawValue
     }
 
-    // Highlight.js Bezeichner
     var effectiveHighlightName: String {
         customHighlightName ?? language.highlightName
+    }
+
+    // Akzentfarbe: built-in Sprache oder Indigo für eigene
+    var akzentFarbe: Color {
+        languageOverride != nil ? .indigo : language.farbe
     }
 
     init(
