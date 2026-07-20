@@ -24,9 +24,15 @@ struct NookApp: App {
     }()
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "hauptfenster") {
             ContentView()
         }
+        .modelContainer(sharedModelContainer)
+
+        MenuBarExtra("Nook", systemImage: "doc.text") {
+            MenuBarView()
+        }
+        .menuBarExtraStyle(.window)
         .modelContainer(sharedModelContainer)
     }
 }
