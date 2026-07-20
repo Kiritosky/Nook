@@ -18,14 +18,6 @@ enum Sortierung: String, CaseIterable {
         case .titel:    return "Nach Titel"
         }
     }
-
-    var symbolName: String {
-        switch self {
-        case .neueste:  return "clock.arrow.trianglehead.counterclockwise.rotate.90"
-        case .aelteste: return "clock"
-        case .titel:    return "textformat"
-        }
-    }
 }
 
 struct SnippetListView: View {
@@ -41,39 +33,32 @@ struct SnippetListView: View {
     @AppStorage("snippetSortierung") private var sortierung: Sortierung = .neueste
 
     private var basisSnippets: [Snippet] {
-        let gefiltert: [Snippet]
+        let basis: [Snippet]
         switch sidebarItem {
-        case .alle:
-            gefiltert = alleSnippets
-        case .favoriten:
-            gefiltert = alleSnippets.filter { $0.isFavorite }
-        case .sprache(let lang):
-            gefiltert = alleSnippets.filter { $0.language == lang }
-        case .projekt(let proj):
-            gefiltert = alleSnippets.filter { $0.project == proj }
+        case .alle:              basis = alleSnippets
+        case .favoriten:         basis = alleSnippets.filter { $0.isFavorite }
+        case .sprache(let lang): basis = alleSnippets.filter { $0.language == lang && $0.languageOverride == nil }
+        case .customSprache(let name): basis = alleSnippets.filter { $0.languageOverride == name }
+        case .projekt(let proj): basis = alleSnippets.filter { $0.project == proj }
         }
 
         switch sortierung {
-        case .neueste:
-            return gefiltert.sorted { $0.createdAt > $1.createdAt }
-        case .aelteste:
-            return gefiltert.sorted { $0.createdAt < $1.createdAt }
-        case .titel:
-            return gefiltert.sorted {
-                $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
-            }
+        case .neueste:  return basis.sorted { $0.createdAt > $1.createdAt }
+        case .aelteste: return basis.sorted { $0.createdAt < $1.createdAt }
+        case .titel:    return basis.sorted {
+            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+        }
         }
     }
 
     private var gefilterteSnippets: [Snippet] {
         var ergebnis = basisSnippets
-        if let schwierigkeit = schwierigkeitsFilter {
-            ergebnis = ergebnis.filter { $0.difficulty == schwierigkeit }
-        }
+        if let s = schwierigkeitsFilter { ergebnis = ergebnis.filter { $0.difficulty == s } }
         guard !suchtext.isEmpty else { return ergebnis }
         return ergebnis.filter {
             $0.title.localizedCaseInsensitiveContains(suchtext) ||
             $0.topic.localizedCaseInsensitiveContains(suchtext) ||
+            $0.effectiveLanguageName.localizedCaseInsensitiveContains(suchtext) ||
             $0.tags.joined(separator: " ").localizedCaseInsensitiveContains(suchtext)
         }
     }
@@ -82,7 +67,7 @@ struct SnippetListView: View {
         VStack(spacing: 0) {
             // Filter-Leiste
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     FilterChip(label: "Alle", aktiv: schwierigkeitsFilter == nil) {
                         schwierigkeitsFilter = nil
                     }
@@ -97,7 +82,7 @@ struct SnippetListView: View {
                     }
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.vertical, 7)
             }
             .background(.bar)
 
@@ -124,6 +109,7 @@ struct SnippetListView: View {
                         }
                     }
             }
+            .listStyle(.inset)
             .overlay {
                 if gefilterteSnippets.isEmpty {
                     ContentUnavailableView(
@@ -140,7 +126,7 @@ struct SnippetListView: View {
         }
         .searchable(text: $suchtext, prompt: "Suchen...")
         .navigationTitle(titelFuerAuswahl)
-        .navigationSplitViewColumnWidth(min: 240, ideal: 280)
+        .navigationSplitViewColumnWidth(min: 260, ideal: 300)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -154,7 +140,7 @@ struct SnippetListView: View {
                 Menu {
                     Picker("Sortierung", selection: $sortierung) {
                         ForEach(Sortierung.allCases, id: \.self) { s in
-                            Label(s.bezeichnung, systemImage: s.symbolName).tag(s)
+                            Text(s.bezeichnung).tag(s)
                         }
                     }
                 } label: {
@@ -166,21 +152,33 @@ struct SnippetListView: View {
 
     private var titelFuerAuswahl: String {
         switch sidebarItem {
-        case .alle:              return "Alle Snippets"
-        case .favoriten:         return "Favoriten"
-        case .sprache(let lang): return lang.rawValue
-        case .projekt(let proj): return proj
+        case .alle:                    return "Alle Snippets"
+        case .favoriten:               return "Favoriten"
+        case .sprache(let lang):       return lang.rawValue
+        case .customSprache(let name): return name
+        case .projekt(let proj):       return proj
         }
     }
 }
 
-// Kompakte Snippet-Vorschau in der Liste
+// MARK: - Snippet-Karte
+
 struct SnippetKarte: View {
     let snippet: Snippet
+    @AppStorage("showCodePreview") private var showCodePreview: Bool = true
+
+    private var codeVorschau: String {
+        snippet.code
+            .components(separatedBy: "\n")
+            .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+            .prefix(2)
+            .joined(separator: "\n")
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
+        VStack(alignment: .leading, spacing: 6) {
+            // Titel + Favorit
+            HStack(alignment: .firstTextBaseline) {
                 Text(snippet.title)
                     .font(.headline)
                     .lineLimit(1)
@@ -191,8 +189,11 @@ struct SnippetKarte: View {
                         .font(.caption)
                 }
             }
-            HStack(spacing: 6) {
-                TagPill(text: snippet.language.rawValue, farbe: .blue)
+
+            // Tags
+            HStack(spacing: 5) {
+                TagPill(text: snippet.effectiveLanguageName, farbe: .blue)
+                SchwierigkeitSterne(stufe: snippet.difficulty)
                 if !snippet.topic.isEmpty {
                     Text(snippet.topic)
                         .font(.caption)
@@ -200,7 +201,20 @@ struct SnippetKarte: View {
                         .lineLimit(1)
                 }
             }
+
+            // Code-Vorschau
+            if showCodePreview && !codeVorschau.isEmpty {
+                Text(codeVorschau)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.quaternary.opacity(0.6))
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+            }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 }

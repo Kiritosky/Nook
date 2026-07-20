@@ -9,10 +9,11 @@ import SwiftData
 struct AddSnippetView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
 
     @State private var titel = ""
     @State private var code = ""
-    @State private var sprache: Language = .swift
+    @State private var spracheName: String = Language.swift.rawValue
     @State private var thema = ""
     @State private var projekt = ""
     @State private var schwierigkeit = 1
@@ -30,24 +31,38 @@ struct AddSnippetView: View {
             Form {
                 Section("Grundlegende Infos") {
                     TextField("Titel", text: $titel)
-                    Picker("Sprache", selection: $sprache) {
-                        ForEach(Language.allCases, id: \.self) { lang in
-                            Text(lang.rawValue).tag(lang)
+
+                    Picker("Sprache", selection: $spracheName) {
+                        Section("Eingebaut") {
+                            ForEach(Language.allCases, id: \.self) { lang in
+                                Label(lang.rawValue, systemImage: lang.symbolName)
+                                    .tag(lang.rawValue)
+                            }
+                        }
+                        if !customLanguages.isEmpty {
+                            Section("Eigene") {
+                                ForEach(customLanguages) { lang in
+                                    Label(lang.name, systemImage: lang.symbolName)
+                                        .tag(lang.name)
+                                }
+                            }
                         }
                     }
-                    TextField("Thema (z.B. Algorithmen, UI, API)", text: $thema)
+
+                    TextField("Thema (z.B. Algorithmen, UI, Netzwerk)", text: $thema)
                     TextField("Projekt (optional)", text: $projekt)
+
                     Picker("Schwierigkeit", selection: $schwierigkeit) {
-                        Text("Anfänger").tag(1)
-                        Text("Mittel").tag(2)
-                        Text("Fortgeschritten").tag(3)
+                        HStack { SchwierigkeitSterne(stufe: 1); Text("Anfänger") }.tag(1)
+                        HStack { SchwierigkeitSterne(stufe: 2); Text("Mittel") }.tag(2)
+                        HStack { SchwierigkeitSterne(stufe: 3); Text("Fortgeschritten") }.tag(3)
                     }
                 }
 
                 Section("Code") {
                     TextEditor(text: $code)
                         .font(.system(.body, design: .monospaced))
-                        .frame(minHeight: 150)
+                        .frame(minHeight: 180)
                 }
 
                 Section("Weitere Details (optional)") {
@@ -69,25 +84,29 @@ struct AddSnippetView: View {
                 }
             }
         }
-        .frame(minWidth: 500, minHeight: 600)
+        .frame(minWidth: 520, minHeight: 640)
     }
 
     private func speichern() {
-        let tags = tagsText
-            .split(separator: ",")
+        let tags = tagsText.split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
+
+        let builtIn = Language(rawValue: spracheName)
+        let customHighlight = customLanguages.first { $0.name == spracheName }?.highlightName
 
         let snippet = Snippet(
             title: titel.trimmingCharacters(in: .whitespaces),
             code: code,
-            language: sprache,
+            language: builtIn ?? .other,
             topic: thema,
             project: projekt.isEmpty ? nil : projekt,
             difficulty: schwierigkeit,
             tags: tags,
             descriptionText: beschreibung.isEmpty ? nil : beschreibung,
-            output: output.isEmpty ? nil : output
+            output: output.isEmpty ? nil : output,
+            languageOverride: builtIn != nil ? nil : spracheName,
+            customHighlightName: customHighlight
         )
         modelContext.insert(snippet)
         dismiss()

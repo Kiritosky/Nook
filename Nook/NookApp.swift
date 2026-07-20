@@ -13,9 +13,9 @@ struct NookApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Snippet.self,
+            CustomLanguage.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
@@ -26,15 +26,25 @@ struct NookApp: App {
     var body: some Scene {
         WindowGroup(id: "hauptfenster") {
             ContentView()
-                .frame(minWidth: 820, minHeight: 520)
+                .frame(minWidth: 860, minHeight: 540)
         }
-        .defaultSize(width: 1100, height: 720)
+        .defaultSize(width: 1200, height: 760)
         .modelContainer(sharedModelContainer)
+        .commands {
+            CommandGroup(replacing: .appSettings) {
+                // Standard-Einstellungen via Settings-Scene
+            }
+        }
 
         MenuBarExtra("Nook", systemImage: "doc.text") {
             MenuBarView()
         }
         .menuBarExtraStyle(.window)
+        .modelContainer(sharedModelContainer)
+
+        Settings {
+            SettingsView()
+        }
         .modelContainer(sharedModelContainer)
     }
 }

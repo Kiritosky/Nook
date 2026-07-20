@@ -10,25 +10,27 @@ enum SidebarItem: Hashable {
     case alle
     case favoriten
     case sprache(Language)
+    case customSprache(String)
     case projekt(String)
 }
 
 struct SidebarView: View {
     @Binding var auswahl: SidebarItem?
     @Query private var alleSnippets: [Snippet]
+    @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
 
     private func anzahl(_ item: SidebarItem) -> Int {
         switch item {
-        case .alle:              return alleSnippets.count
-        case .favoriten:         return alleSnippets.filter { $0.isFavorite }.count
-        case .sprache(let lang): return alleSnippets.filter { $0.language == lang }.count
-        case .projekt(let proj): return alleSnippets.filter { $0.project == proj }.count
+        case .alle:                    return alleSnippets.count
+        case .favoriten:               return alleSnippets.filter { $0.isFavorite }.count
+        case .sprache(let lang):       return alleSnippets.filter { $0.language == lang && $0.languageOverride == nil }.count
+        case .customSprache(let name): return alleSnippets.filter { $0.languageOverride == name }.count
+        case .projekt(let proj):       return alleSnippets.filter { $0.project == proj }.count
         }
     }
 
     private var projekte: [String] {
-        let alle = alleSnippets.compactMap { $0.project }.filter { !$0.isEmpty }
-        return Array(Set(alle)).sorted()
+        Array(Set(alleSnippets.compactMap { $0.project }.filter { !$0.isEmpty })).sorted()
     }
 
     var body: some View {
@@ -48,6 +50,11 @@ struct SidebarView: View {
                         .tag(SidebarItem.sprache(sprache))
                         .badge(anzahl(.sprache(sprache)))
                 }
+                ForEach(customLanguages) { lang in
+                    Label(lang.name, systemImage: lang.symbolName)
+                        .tag(SidebarItem.customSprache(lang.name))
+                        .badge(anzahl(.customSprache(lang.name)))
+                }
             }
 
             if !projekte.isEmpty {
@@ -61,6 +68,6 @@ struct SidebarView: View {
             }
         }
         .navigationTitle("Nook")
-        .navigationSplitViewColumnWidth(min: 180, ideal: 210)
+        .navigationSplitViewColumnWidth(min: 185, ideal: 215)
     }
 }

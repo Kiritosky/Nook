@@ -29,7 +29,6 @@ enum Language: String, CaseIterable, Codable {
         }
     }
 
-    // Highlight.js Sprachbezeichner
     var highlightName: String {
         switch self {
         case .python:     return "python"
@@ -51,12 +50,26 @@ class Snippet {
     var language: Language
     var topic: String
     var project: String?
-    var difficulty: Int          // 1 = Anfänger, 2 = Mittel, 3 = Fortgeschritten
+    var difficulty: Int
     var tags: [String]
     var descriptionText: String?
     var output: String?
     var createdAt: Date
     var isFavorite: Bool
+
+    // Benutzerdefinierte Sprache (überschreibt language wenn gesetzt)
+    var languageOverride: String?
+    var customHighlightName: String?
+
+    // Angezeigter Sprachname (built-in oder custom)
+    var effectiveLanguageName: String {
+        languageOverride ?? language.rawValue
+    }
+
+    // Highlight.js Bezeichner
+    var effectiveHighlightName: String {
+        customHighlightName ?? language.highlightName
+    }
 
     init(
         title: String = "",
@@ -68,7 +81,9 @@ class Snippet {
         tags: [String] = [],
         descriptionText: String? = nil,
         output: String? = nil,
-        isFavorite: Bool = false
+        isFavorite: Bool = false,
+        languageOverride: String? = nil,
+        customHighlightName: String? = nil
     ) {
         self.title = title
         self.code = code
@@ -81,5 +96,7 @@ class Snippet {
         self.output = output
         self.createdAt = Date()
         self.isFavorite = isFavorite
+        self.languageOverride = languageOverride
+        self.customHighlightName = customHighlightName
     }
 }
