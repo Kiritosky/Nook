@@ -202,6 +202,38 @@ struct SidebarZeile: View {
     }
 }
 
+// MARK: - BibliothekZeile (Einstiegspunkt zum Reingehen)
+
+struct BibliothekZeile: View {
+    let symbol: String
+    let farbe: Color
+    let titel: String
+    let anzahl: Int
+
+    var body: some View {
+        HStack(spacing: 10) {
+            FarbIcon(symbol: symbol, farbe: farbe, groesse: 26)
+
+            Text(LocalizedStringKey(titel))
+                .font(.system(.body, weight: .medium))
+                .lineLimit(1)
+
+            Spacer()
+
+            if anzahl > 0 {
+                Text("\(anzahl)")
+                    .font(.caption2).fontWeight(.semibold)
+                    .foregroundStyle(.secondary).monospacedDigit()
+            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(.vertical, 1)
+        .contentShape(Rectangle())
+    }
+}
+
 // MARK: - TagSidebarZeile
 
 struct TagSidebarZeile: View {

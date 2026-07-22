@@ -43,12 +43,29 @@ struct SnippetListView: View {
     @Binding var selectedSnippet: Snippet?
     @Binding var addSnippetAnzeigen: Bool
     @Binding var tagFilter: String?
-
-    @State private var suchtext = ""
+    @Binding var suchtext: String
     @State private var schwierigkeitsFilter: Int? = nil
     @AppStorage("snippetSortierung") private var sortierung: Sortierung = .neueste
 
     private var istPapierkorb: Bool { if case .papierkorb = sidebarItem { return true } else { return false } }
+
+    /// Tag-Autovervollständigung: nur wenn die Suche mit `#` beginnt, passende Tags
+    /// aus dem aktuellen Bestand vorschlagen (alphabetisch, max. 8).
+    private var tagVorschlaege: [String] {
+        let text = suchtext.trimmingCharacters(in: .whitespaces)
+        guard text.hasPrefix("#") else { return [] }
+        let begriff = String(text.dropFirst()).trimmingCharacters(in: .whitespaces)
+        let alleTags = Set(alleSnippets.flatMap { $0.tags })
+        let passend = begriff.isEmpty
+            ? alleTags
+            : alleTags.filter { $0.localizedCaseInsensitiveContains(begriff) }
+        // Exakte Eingabe nicht nochmal vorschlagen
+        return passend
+            .filter { $0.caseInsensitiveCompare(begriff) != .orderedSame }
+            .sorted()
+            .prefix(8)
+            .map { $0 }
+    }
 
     private var basisSnippets: [Snippet] {
         // Papierkorb: bereits nach Löschzeitpunkt sortiert, ohne Anheften-Logik
@@ -65,6 +82,8 @@ struct SnippetListView: View {
         case .tag(let tag):            gefiltert = alleSnippets.filter { $0.tags.contains(tag) }
         case .thema(let thema):        gefiltert = alleSnippets.filter { $0.topic == thema }
         case .papierkorb:              gefiltert = papierkorbSnippets   // via Früh-Return oben abgedeckt
+        case .projekteBrowser, .themenBrowser, .tagsBrowser:
+            gefiltert = []   // werden nie direkt als Liste gezeigt (siehe ContentView-Browser)
         }
 
         let sortiert: [Snippet]
@@ -84,13 +103,23 @@ struct SnippetListView: View {
         var r = basisSnippets
         if let s = schwierigkeitsFilter { r = r.filter { $0.difficulty == s } }
         if let tag = tagFilter { r = r.filter { $0.tags.contains(tag) } }
-        guard !suchtext.isEmpty else { return r }
+
+        let text = suchtext.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else { return r }
+
+        // Explizite Tag-Suche: "#tag" filtert ausschließlich nach Tags.
+        if text.hasPrefix("#") {
+            let begriff = String(text.dropFirst()).trimmingCharacters(in: .whitespaces)
+            guard !begriff.isEmpty else { return r }
+            return r.filter { $0.tags.contains { $0.localizedCaseInsensitiveContains(begriff) } }
+        }
+
         return r.filter {
-            $0.title.localizedCaseInsensitiveContains(suchtext) ||
-            $0.topic.localizedCaseInsensitiveContains(suchtext) ||
-            $0.code.localizedCaseInsensitiveContains(suchtext) ||
-            $0.effectiveLanguageName.localizedCaseInsensitiveContains(suchtext) ||
-            $0.tags.joined(separator: " ").localizedCaseInsensitiveContains(suchtext)
+            $0.title.localizedCaseInsensitiveContains(text) ||
+            $0.topic.localizedCaseInsensitiveContains(text) ||
+            $0.code.localizedCaseInsensitiveContains(text) ||
+            $0.effectiveLanguageName.localizedCaseInsensitiveContains(text) ||
+            $0.tags.joined(separator: " ").localizedCaseInsensitiveContains(text)
         }
     }
 
@@ -192,7 +221,13 @@ struct SnippetListView: View {
                 }
             }
         }
-        .searchable(text: $suchtext, prompt: "Suchen...")
+        .searchable(text: $suchtext, prompt: Text("Suchen… (#tag für Tags)"))
+        .searchSuggestions {
+            ForEach(tagVorschlaege, id: \.self) { tag in
+                Label("#\(tag)", systemImage: "number")
+                    .searchCompletion("#\(tag)")
+            }
+        }
         .navigationTitle(LocalizedStringKey(titelFuerAuswahl))
         .navigationSplitViewColumnWidth(min: 260, ideal: 300)
         .toolbar {
@@ -227,6 +262,9 @@ struct SnippetListView: View {
         case .tag(let tag):            return "#\(tag)"
         case .thema(let thema):        return thema
         case .papierkorb:              return "Papierkorb"
+        case .projekteBrowser:         return "Projekte"
+        case .themenBrowser:           return "Themen"
+        case .tagsBrowser:             return "Tags"
         }
     }
 

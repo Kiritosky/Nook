@@ -16,6 +16,25 @@ enum SidebarItem: Hashable {
     case tag(String)
     case thema(String)
     case papierkorb
+    // Einstiegspunkte zum „Reingehen" (Bibliotheken) – keine Inline-Listen
+    case projekteBrowser
+    case themenBrowser
+    case tagsBrowser
+}
+
+/// Ziel beim Reingehen in eine Bibliothek (Projekt/Thema/Tag) – für NavigationStack.
+enum BrowserZiel: Hashable {
+    case projekt(String)
+    case thema(String)
+    case tag(String)
+
+    var alsSidebarItem: SidebarItem {
+        switch self {
+        case .projekt(let n): return .projekt(n)
+        case .thema(let n):   return .thema(n)
+        case .tag(let n):     return .tag(n)
+        }
+    }
 }
 
 struct SidebarView: View {
@@ -27,8 +46,6 @@ struct SidebarView: View {
     @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
 
-    @State private var tagsAusgeklappt = true
-    @State private var themenAusgeklappt = false
 
     private func anzahl(_ item: SidebarItem) -> Int {
         switch item {
@@ -41,7 +58,15 @@ struct SidebarView: View {
         case .tag(let tag):            return alleSnippets.filter { $0.tags.contains(tag) }.count
         case .thema(let thema):        return alleSnippets.filter { $0.topic == thema }.count
         case .papierkorb:              return papierkorbSnippets.count
+        case .projekteBrowser:         return alleProjektNamen.count
+        case .themenBrowser:           return alleThemen.count
+        case .tagsBrowser:             return alleTags.count
         }
+    }
+
+    // Alle Projektnamen (Objekte + verwaiste Strings), dedupliziert
+    private var alleProjektNamen: [String] {
+        Array(Set(projekte.map(\.name) + orphanProjekte)).sorted()
     }
 
     private var projektNamenMitObjekt: Set<String> { Set(projekte.map(\.name)) }
@@ -107,43 +132,24 @@ struct SidebarView: View {
                     }
                 } header: { sectionHeader("Sprachen") }
 
-                // MARK: Projekte
-                if !projekte.isEmpty || !orphanProjekte.isEmpty {
-                    Section {
-                        ForEach(projekte) { projekt in
-                            SidebarZeile(symbol: projekt.symbolName, farbe: projekt.farbe,
-                                         titel: projekt.name,
-                                         anzahl: anzahl(.projekt(projekt.name)))
-                                .tag(SidebarItem.projekt(projekt.name))
-                        }
-                        ForEach(orphanProjekte, id: \.self) { name in
-                            SidebarZeile(symbol: "folder.fill", farbe: .brown,
-                                         titel: name, anzahl: anzahl(.projekt(name)))
-                                .tag(SidebarItem.projekt(name))
-                        }
-                    } header: { sectionHeader("Projekte") }
-                }
-
-                // MARK: Tags (ausfaltbar)
-                if !alleTags.isEmpty {
-                    Section(isExpanded: $tagsAusgeklappt) {
-                        ForEach(alleTags, id: \.self) { tag in
-                            TagSidebarZeile(tag: tag, anzahl: anzahl(.tag(tag)))
-                                .tag(SidebarItem.tag(tag))
-                        }
-                    } header: { sectionHeader("Tags") }
-                }
-
-                // MARK: Themen (ausfaltbar)
-                if !alleThemen.isEmpty {
-                    Section(isExpanded: $themenAusgeklappt) {
-                        ForEach(alleThemen, id: \.self) { thema in
-                            SidebarZeile(symbol: "text.book.closed.fill", farbe: .teal,
-                                         titel: thema, anzahl: anzahl(.thema(thema)))
-                                .tag(SidebarItem.thema(thema))
-                        }
-                    } header: { sectionHeader("Themen") }
-                }
+                // MARK: Bibliotheken (Einstiegspunkte – kein Inline-Listing)
+                Section {
+                    if !alleProjektNamen.isEmpty {
+                        BibliothekZeile(symbol: "folder.fill", farbe: .brown,
+                                        titel: "Projekte", anzahl: anzahl(.projekteBrowser))
+                            .tag(SidebarItem.projekteBrowser)
+                    }
+                    if !alleThemen.isEmpty {
+                        BibliothekZeile(symbol: "text.book.closed.fill", farbe: .teal,
+                                        titel: "Themen", anzahl: anzahl(.themenBrowser))
+                            .tag(SidebarItem.themenBrowser)
+                    }
+                    if !alleTags.isEmpty {
+                        BibliothekZeile(symbol: "number", farbe: .purple,
+                                        titel: "Tags", anzahl: anzahl(.tagsBrowser))
+                            .tag(SidebarItem.tagsBrowser)
+                    }
+                } header: { sectionHeader("Durchstöbern") }
 
                 // MARK: Papierkorb
                 if !papierkorbSnippets.isEmpty {

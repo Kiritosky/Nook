@@ -19,9 +19,11 @@ struct ContentView: View {
     @State private var onboardingAnzeigen = false
 
     @State private var sidebarAuswahl: SidebarItem? = .alle
+    @State private var browserPfad: [BrowserZiel] = []
     @State private var selectedSnippet: Snippet?
     @State private var addSnippetAnzeigen = false
     @State private var tagFilter: String? = nil
+    @State private var suchtext = ""
     @State private var dropHighlight = false
 
     // Clipboard-to-Snippet: MenuBar schreibt hier rein
@@ -42,12 +44,7 @@ struct ContentView: View {
         NavigationSplitView {
             SidebarView(auswahl: $sidebarAuswahl)
         } content: {
-            SnippetListView(
-                sidebarItem: sidebarAuswahl ?? .alle,
-                selectedSnippet: $selectedSnippet,
-                addSnippetAnzeigen: $addSnippetAnzeigen,
-                tagFilter: $tagFilter
-            )
+            inhaltsSpalte
         } detail: {
             if let snippet = selectedSnippet {
                 SnippetDetailView(snippet: snippet, tagFilter: $tagFilter)
@@ -97,6 +94,10 @@ struct ContentView: View {
         .onChange(of: pendingClipboardCode) { _, new in
             if !new.isEmpty { addSnippetAnzeigen = true }
         }
+        .onChange(of: sidebarAuswahl) { _, _ in
+            browserPfad.removeAll()   // Reingehen-Verlauf beim Wechsel zurücksetzen
+            suchtext = ""             // Suche pro Kategorie frisch (Tag-Klick setzt danach neu)
+        }
         .onChange(of: papierkorb.zuletztGeloescht) { _, geloescht in
             // Gerade gelöschtes Snippet aus der Detailauswahl entfernen
             if let g = geloescht, selectedSnippet == g { selectedSnippet = nil }
@@ -120,6 +121,54 @@ struct ContentView: View {
                 try? await Task.sleep(for: .milliseconds(300))
                 addSnippetAnzeigen = true
             }
+        }
+    }
+
+    // MARK: - Mittlere Spalte (Snippet-Liste oder Bibliothek-Browser)
+
+    @ViewBuilder
+    private var inhaltsSpalte: some View {
+        let item = sidebarAuswahl ?? .alle
+        switch item {
+        case .projekteBrowser, .themenBrowser, .tagsBrowser:
+            NavigationStack(path: $browserPfad) {
+                BibliothekBrowser(art: browserArt(item), onTagGewaehlt: tagWaehlen)
+                    .navigationDestination(for: BrowserZiel.self) { ziel in
+                        SnippetListView(
+                            sidebarItem: ziel.alsSidebarItem,
+                            selectedSnippet: $selectedSnippet,
+                            addSnippetAnzeigen: $addSnippetAnzeigen,
+                            tagFilter: $tagFilter,
+                            suchtext: $suchtext
+                        )
+                    }
+            }
+        default:
+            SnippetListView(
+                sidebarItem: item,
+                selectedSnippet: $selectedSnippet,
+                addSnippetAnzeigen: $addSnippetAnzeigen,
+                tagFilter: $tagFilter,
+                suchtext: $suchtext
+            )
+        }
+    }
+
+    /// Klick auf einen Tag im Browser: zur Gesamtübersicht wechseln und die
+    /// Suche auf „#tag" setzen (statt in eine eigene Ansicht zu drillen).
+    private func tagWaehlen(_ tag: String) {
+        sidebarAuswahl = .alle
+        // Nach dem Auswahl-Wechsel (leert den Suchtext via onChange) die Tag-Suche setzen.
+        DispatchQueue.main.async {
+            suchtext = "#\(tag)"
+        }
+    }
+
+    private func browserArt(_ item: SidebarItem) -> BibliothekBrowser.Art {
+        switch item {
+        case .themenBrowser: return .themen
+        case .tagsBrowser:   return .tags
+        default:             return .projekte
         }
     }
 

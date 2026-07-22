@@ -453,6 +453,16 @@
         }
       }
     },
+    "Durchstöbern": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse"
+          }
+        }
+      }
+    },
     "EIGENE": {
       "localizations": {
         "en": {
@@ -1093,6 +1103,16 @@
         }
       }
     },
+    "Projekt suchen…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search project…"
+          }
+        }
+      }
+    },
     "Projekte": {
       "localizations": {
         "en": {
@@ -1373,6 +1393,16 @@
         }
       }
     },
+    "Suchen… (#tag für Tags)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search… (#tag for tags)"
+          }
+        }
+      }
+    },
     "Symbol": {
       "localizations": {
         "en": {
@@ -1389,6 +1419,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Syntax highlighting"
+          }
+        }
+      }
+    },
+    "Tag suchen…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search tag…"
           }
         }
       }
@@ -1459,6 +1499,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Topic"
+          }
+        }
+      }
+    },
+    "Thema suchen…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search topic…"
           }
         }
       }
