@@ -193,7 +193,7 @@ struct SnippetListView: View {
             }
         }
         .searchable(text: $suchtext, prompt: "Suchen...")
-        .navigationTitle(titelFuerAuswahl)
+        .navigationTitle(LocalizedStringKey(titelFuerAuswahl))
         .navigationSplitViewColumnWidth(min: 260, ideal: 300)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

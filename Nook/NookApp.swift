@@ -10,6 +10,17 @@ import SwiftData
 struct NookApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    @AppStorage("appSprache") private var appSpracheRaw = AppSprache.system.rawValue
+
+    /// Gewählte Oberflächensprache – überschreibt die Locale aller Szenen live.
+    private var oberflaechenLocale: Locale {
+        switch appSpracheRaw {
+        case AppSprache.deutsch.rawValue:  return Locale(identifier: "de")
+        case AppSprache.englisch.rawValue: return Locale(identifier: "en")
+        default:                           return .autoupdatingCurrent
+        }
+    }
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([Snippet.self, CustomLanguage.self, Projekt.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
@@ -33,12 +44,14 @@ struct NookApp: App {
         WindowGroup(id: "hauptfenster") {
             ContentView()
                 .frame(minWidth: 860, minHeight: 540)
+                .environment(\.locale, oberflaechenLocale)
         }
         .defaultSize(width: 1200, height: 760)
         .modelContainer(sharedModelContainer)
 
         MenuBarExtra {
             MenuBarView()
+                .environment(\.locale, oberflaechenLocale)
         } label: {
             Image(systemName: "curlybraces")
         }
@@ -47,6 +60,7 @@ struct NookApp: App {
 
         Settings {
             SettingsView()
+                .environment(\.locale, oberflaechenLocale)
         }
         .modelContainer(sharedModelContainer)
     }

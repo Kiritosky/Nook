@@ -104,7 +104,7 @@ struct AddSnippetView: View {
                             if gruppe.titel != Language.gruppen.first?.titel {
                                 Divider().padding(.top, 4)
                             }
-                            Text(gruppe.titel.uppercased())
+                            Text(LocalizedStringKey(gruppe.titel)).textCase(.uppercase)
                                 .font(.system(size: 9, weight: .semibold))
                                 .foregroundStyle(.tertiary).tracking(0.5)
                                 .padding(.top, 2)
@@ -148,7 +148,7 @@ struct AddSnippetView: View {
                                 Button { schwierigkeit = stufe } label: {
                                     VStack(spacing: 3) {
                                         SchwierigkeitSterne(stufe: stufe)
-                                        Text(["", "Anfänger", "Mittel", "Profi"][stufe])
+                                        Text(LocalizedStringKey(["", "Anfänger", "Mittel", "Profi"][stufe]))
                                             .font(.system(size: 9))
                                     }
                                     .frame(maxWidth: .infinity).padding(.vertical, 7)
@@ -314,7 +314,7 @@ struct AddSnippetView: View {
     @ViewBuilder
     private func feldSektion<C: View>(_ label: String, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(label.uppercased())
+            Text(LocalizedStringKey(label)).textCase(.uppercase)
                 .font(.caption2).fontWeight(.semibold).foregroundStyle(.tertiary).tracking(0.5)
             content()
         }

@@ -86,11 +86,12 @@
 				};
 			};
 			buildConfigurationList = BFC0A84B300E340500A26FC3 /* Build configuration list for PBXProject "Nook" */;
-			developmentRegion = en;
+			developmentRegion = de;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
+				de,
 			);
 			mainGroup = BFC0A847300E340500A26FC3;
 			minimizedProjectReferenceProxies = 1;

@@ -103,7 +103,7 @@ struct FilterChip: View {
                     Image(systemName: symbol)
                         .font(.system(size: 9, weight: .semibold))
                 }
-                Text(label)
+                Text(LocalizedStringKey(label))
                     .font(.caption)
                     .fontWeight(aktiv ? .semibold : .regular)
             }
@@ -132,7 +132,7 @@ struct SectionHeader: View {
             Capsule()
                 .fill(Color.accentColor.opacity(0.5))
                 .frame(width: 3, height: 11)
-            Text(titel)
+            Text(LocalizedStringKey(titel))
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
@@ -179,7 +179,7 @@ struct SidebarZeile: View {
         HStack(spacing: 10) {
             FarbIcon(symbol: symbol, farbe: farbe, groesse: 26)
 
-            Text(titel)
+            Text(LocalizedStringKey(titel))
                 .font(.system(.body, weight: .medium))
                 .lineLimit(1)
 

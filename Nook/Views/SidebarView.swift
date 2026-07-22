@@ -199,7 +199,7 @@ struct SidebarView: View {
 
     @ViewBuilder
     private func sectionHeader(_ titel: String) -> some View {
-        Text(titel)
+        Text(LocalizedStringKey(titel))
             .font(.caption2).fontWeight(.semibold)
             .foregroundStyle(.secondary)
             .textCase(.uppercase).tracking(0.8)

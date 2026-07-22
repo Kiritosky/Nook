@@ -1,0 +1,1689 @@
+{
+  "sourceLanguage": "de",
+  "strings": {
+    "": {},
+    "#": {},
+    "#%@": {},
+    "%.1f pt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%.1f pt"
+          }
+        }
+      }
+    },
+    "%lld": {},
+    "%lld %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%lld Snippet%@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld Snippet%2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld Snippet%2$@"
+          }
+        }
+      }
+    },
+    "%lld Snippets gefunden.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Found %lld snippets."
+          }
+        }
+      }
+    },
+    "%lld Z.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ln"
+          }
+        }
+      }
+    },
+    "%lld Zeilen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld lines"
+          }
+        }
+      }
+    },
+    "%lld eigene %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld eigene %2$@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld custom %2$@"
+          }
+        }
+      }
+    },
+    "%lld×": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld×"
+          }
+        }
+      }
+    },
+    "'%@' kopiert.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "'%@' copied."
+          }
+        }
+      }
+    },
+    "'%@' zurückgegeben.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Returned '%@'."
+          }
+        }
+      }
+    },
+    "+%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld"
+          }
+        }
+      }
+    },
+    "Abbrechen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Alle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "Alle Snippets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Snippets"
+          }
+        }
+      }
+    },
+    "Allgemein": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
+          }
+        }
+      }
+    },
+    "Als Markdown kopieren": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy as Markdown"
+          }
+        }
+      }
+    },
+    "Anfänger": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beginner"
+          }
+        }
+      }
+    },
+    "Angeheftet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pinned"
+          }
+        }
+      }
+    },
+    "Anheften": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pin"
+          }
+        }
+      }
+    },
+    "Aus Datei importieren …": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import from file …"
+          }
+        }
+      }
+    },
+    "Aus Favoriten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from Favorites"
+          }
+        }
+      }
+    },
+    "Auto-Theme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto theme"
+          }
+        }
+      }
+    },
+    "Automatisch mit System-Modus wechseln": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch automatically with system mode"
+          }
+        }
+      }
+    },
+    "Backend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backend"
+          }
+        }
+      }
+    },
+    "Bearbeiten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        }
+      }
+    },
+    "Beenden": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit"
+          }
+        }
+      }
+    },
+    "Beim Anmelden starten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launch at login"
+          }
+        }
+      }
+    },
+    "Beispiel-Output (optional)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Example output (optional)"
+          }
+        }
+      }
+    },
+    "Beschreibung (optional)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Description (optional)"
+          }
+        }
+      }
+    },
+    "Bibliothek": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Library"
+          }
+        }
+      }
+    },
+    "Blitz": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bolt"
+          }
+        }
+      }
+    },
+    "Build": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build"
+          }
+        }
+      }
+    },
+    "Code": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
+          }
+        }
+      }
+    },
+    "Code-Schrift": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code font"
+          }
+        }
+      }
+    },
+    "Code-Vorschau in der Snippet-Liste anzeigen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show code preview in the snippet list"
+          }
+        }
+      }
+    },
+    "Das Syntax-Theme wechselt automatisch mit dem macOS Dark/Light Mode.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The syntax theme switches automatically with macOS Dark/Light mode."
+          }
+        }
+      }
+    },
+    "Daten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        }
+      }
+    },
+    "Daten & Shell": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data & Shell"
+          }
+        }
+      }
+    },
+    "Datenbank": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Database"
+          }
+        }
+      }
+    },
+    "Diese Kürzel folgen macOS-Konventionen und können nicht geändert werden.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These shortcuts follow macOS conventions and can't be changed."
+          }
+        }
+      }
+    },
+    "Dokument": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Document"
+          }
+        }
+      }
+    },
+    "Dunkles Theme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dark theme"
+          }
+        }
+      }
+    },
+    "Duplizieren": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duplicate"
+          }
+        }
+      }
+    },
+    "EIGENE": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CUSTOM"
+          }
+        }
+      }
+    },
+    "Eigene Sprachen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom languages"
+          }
+        }
+      }
+    },
+    "Einstellungen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "Endgültig löschen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete permanently"
+          }
+        }
+      }
+    },
+    "Erscheinungsbild": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        }
+      }
+    },
+    "Erstelle dein erstes Projekt um Snippets zu organisieren.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create your first project to organize snippets."
+          }
+        }
+      }
+    },
+    "Erstelle dein erstes Snippet und leg los.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create your first snippet and get going."
+          }
+        }
+      }
+    },
+    "Erstellen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        }
+      }
+    },
+    "Erstes Snippet erstellen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create first snippet"
+          }
+        }
+      }
+    },
+    "Export": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export"
+          }
+        }
+      }
+    },
+    "FARBE": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "COLOR"
+          }
+        }
+      }
+    },
+    "Favoriten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorites"
+          }
+        }
+      }
+    },
+    "Filter aufheben": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear filter"
+          }
+        }
+      }
+    },
+    "Fortgeschritten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        }
+      }
+    },
+    "Fügt Snippets aus einer Nook-Backup-Datei hinzu. Bereits vorhandene Snippets werden übersprungen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adds snippets from a Nook backup file. Existing snippets are skipped."
+          }
+        }
+      }
+    },
+    "Gehirn": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Brain"
+          }
+        }
+      }
+    },
+    "Gelöschte Snippets kannst du wiederherstellen oder endgültig entfernen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can restore deleted snippets or remove them permanently."
+          }
+        }
+      }
+    },
+    "Gibt den Code eines Nook-Snippets zurück, damit er in anderen Aktionen verwendet werden kann.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Returns the code of a Nook snippet so it can be used in other actions."
+          }
+        }
+      }
+    },
+    "Gibt eine Liste aller gespeicherten Snippet-Titel zurück.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Returns a list of all saved snippet titles."
+          }
+        }
+      }
+    },
+    "Globaler Shortcut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Global shortcut"
+          }
+        }
+      }
+    },
+    "Helles Theme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Light theme"
+          }
+        }
+      }
+    },
+    "Highlight-ID (z.B. elixir)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Highlight ID (e.g. elixir)"
+          }
+        }
+      }
+    },
+    "Hinzufügen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "Import": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import"
+          }
+        }
+      }
+    },
+    "In den Papierkorb (mit Rückgängig)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move to Trash (with undo)"
+          }
+        }
+      }
+    },
+    "In den Papierkorb verschoben": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moved to Trash"
+          }
+        }
+      }
+    },
+    "In-App Kürzel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In-app shortcuts"
+          }
+        }
+      }
+    },
+    "Kein Snippet ausgewählt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No snippet selected"
+          }
+        }
+      }
+    },
+    "Kein Snippet mit dem Titel '%@' gefunden.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No snippet found with the title '%@'."
+          }
+        }
+      }
+    },
+    "Kein Snippet mit diesem Tag": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No snippet with this tag"
+          }
+        }
+      }
+    },
+    "Keine Projekte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No projects"
+          }
+        }
+      }
+    },
+    "Keine Treffer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No matches"
+          }
+        }
+      }
+    },
+    "Keins": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "Klicke auf das Feld und drücke eine Tastenkombination (mindestens ⌘, ⌥, ⌃ oder ⇧). Mit ⌫ wird das Kürzel gelöscht.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click the field and press a key combination (at least ⌘, ⌥, ⌃ or ⇧). Press ⌫ to clear it."
+          }
+        }
+      }
+    },
+    "Kopieren": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        }
+      }
+    },
+    "Kopiert": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied"
+          }
+        }
+      }
+    },
+    "Kopiert den Code eines Nook-Snippets in die Zwischenablage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copies the code of a Nook snippet to the clipboard."
+          }
+        }
+      }
+    },
+    "Kopiert!": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied!"
+          }
+        }
+      }
+    },
+    "Losgelöst": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unpin"
+          }
+        }
+      }
+    },
+    "Löschen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "Manche Bereiche übernehmen die Sprache erst nach einem Neustart der App.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some areas apply the language only after restarting the app."
+          }
+        }
+      }
+    },
+    "Markdown": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Markdown"
+          }
+        }
+      }
+    },
+    "Mehrere Tags mit Komma trennen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Separate multiple tags with commas"
+          }
+        }
+      }
+    },
+    "Meist: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Most: %@"
+          }
+        }
+      }
+    },
+    "Mittel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Intermediate"
+          }
+        }
+      }
+    },
+    "NAME": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NAME"
+          }
+        }
+      }
+    },
+    "Nach #%@ filtern": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter by #%@"
+          }
+        }
+      }
+    },
+    "Name (z.B. Elixir)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name (e.g. Elixir)"
+          }
+        }
+      }
+    },
+    "Netz": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network"
+          }
+        }
+      }
+    },
+    "Neue Sprache": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New language"
+          }
+        }
+      }
+    },
+    "Neues Projekt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New project"
+          }
+        }
+      }
+    },
+    "Neues Snippet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New snippet"
+          }
+        }
+      }
+    },
+    "Noch keine Snippets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No snippets yet"
+          }
+        }
+      }
+    },
+    "Noch keine eigenen Sprachen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No custom languages yet."
+          }
+        }
+      }
+    },
+    "Nook": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nook"
+          }
+        }
+      }
+    },
+    "Nook startet automatisch als Menüleisten-App, wenn du dich anmeldest.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nook starts automatically as a menu bar app when you log in."
+          }
+        }
+      }
+    },
+    "Nook öffnen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Nook"
+          }
+        }
+      }
+    },
+    "Papierkorb": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trash"
+          }
+        }
+      }
+    },
+    "Papierkorb leeren": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty Trash"
+          }
+        }
+      }
+    },
+    "Plattform": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Platform"
+          }
+        }
+      }
+    },
+    "Profi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pro"
+          }
+        }
+      }
+    },
+    "Projekt": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project"
+          }
+        }
+      }
+    },
+    "Projekt hinzufügen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add project"
+          }
+        }
+      }
+    },
+    "Projekt löschen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete project"
+          }
+        }
+      }
+    },
+    "Projekte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projects"
+          }
+        }
+      }
+    },
+    "Projekte in Einstellungen → Projekte anlegen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create projects in Settings → Projects"
+          }
+        }
+      }
+    },
+    "Rückgängig": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        }
+      }
+    },
+    "SYMBOL": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SYMBOL"
+          }
+        }
+      }
+    },
+    "Sammlung": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collection"
+          }
+        }
+      }
+    },
+    "Sammlung exportieren …": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export collection …"
+          }
+        }
+      }
+    },
+    "Schriftgröße": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Font size"
+          }
+        }
+      }
+    },
+    "Schwierigkeit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Difficulty"
+          }
+        }
+      }
+    },
+    "Snippet aus Zwischenablage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippet from clipboard"
+          }
+        }
+      }
+    },
+    "Snippet bearbeiten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit snippet"
+          }
+        }
+      }
+    },
+    "Snippet in Zwischenablage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippet to clipboard"
+          }
+        }
+      }
+    },
+    "Snippet suchen...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search snippets..."
+          }
+        }
+      }
+    },
+    "Snippet-Code abrufen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get snippet code"
+          }
+        }
+      }
+    },
+    "Snippet-Liste": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippet list"
+          }
+        }
+      }
+    },
+    "Snippet-Titel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippet title"
+          }
+        }
+      }
+    },
+    "Snippets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippets"
+          }
+        }
+      }
+    },
+    "Snippets auflisten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List snippets"
+          }
+        }
+      }
+    },
+    "Sonstiges": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other"
+          }
+        }
+      }
+    },
+    "Sortierung": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorting"
+          }
+        }
+      }
+    },
+    "Speichern": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "Speichert alle Snippets als lesbare JSON-Datei — deine Sicherung, jederzeit wieder importierbar.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saves all snippets as a readable JSON file — your backup, importable anytime."
+          }
+        }
+      }
+    },
+    "Sprache": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        }
+      }
+    },
+    "Sprache der Oberfläche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interface language"
+          }
+        }
+      }
+    },
+    "Sprache hinzufügen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add language"
+          }
+        }
+      }
+    },
+    "Sprache löschen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete language"
+          }
+        }
+      }
+    },
+    "Sprachen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Languages"
+          }
+        }
+      }
+    },
+    "Start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        }
+      }
+    },
+    "Suchen...": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search..."
+          }
+        }
+      }
+    },
+    "Symbol": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
+          }
+        }
+      }
+    },
+    "Syntax Highlighting": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Syntax highlighting"
+          }
+        }
+      }
+    },
+    "Tag-Filter aufheben um alle zu sehen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear the tag filter to see all."
+          }
+        }
+      }
+    },
+    "Tags": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tags"
+          }
+        }
+      }
+    },
+    "Tastaturkürzel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keyboard shortcuts"
+          }
+        }
+      }
+    },
+    "Template": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Template"
+          }
+        }
+      }
+    },
+    "Templates – %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Templates – %@"
+          }
+        }
+      }
+    },
+    "Terminal": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminal"
+          }
+        }
+      }
+    },
+    "Thema": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topic"
+          }
+        }
+      }
+    },
+    "Theme": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Theme"
+          }
+        }
+      }
+    },
+    "Themen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topics"
+          }
+        }
+      }
+    },
+    "Titel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title"
+          }
+        }
+      }
+    },
+    "Titel oder Teil des Titels des Snippets": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title or part of the snippet's title"
+          }
+        }
+      }
+    },
+    "Version": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "Versuche einen anderen Begriff.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try a different term."
+          }
+        }
+      }
+    },
+    "Vorschau:": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview:"
+          }
+        }
+      }
+    },
+    "Web": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web"
+          }
+        }
+      }
+    },
+    "Wiederherstellen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore"
+          }
+        }
+      }
+    },
+    "Wähle ein Snippet aus der Liste oder erstelle eines mit ⌘N.\nCode-Dateien kannst du auch direkt hierher ziehen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a snippet from the list or create one with ⌘N.\nYou can also drag code files here directly."
+          }
+        }
+      }
+    },
+    "Wähle eine Kategorie": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a category"
+          }
+        }
+      }
+    },
+    "Zahnrad": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gear"
+          }
+        }
+      }
+    },
+    "Zu Favoriten": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Favorites"
+          }
+        }
+      }
+    },
+    "Zurücksetzen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        }
+      }
+    },
+    "array, sort, performance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "array, sort, performance"
+          }
+        }
+      }
+    },
+    "let x = 42": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "let x = 42"
+          }
+        }
+      }
+    },
+    "macOS": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS"
+          }
+        }
+      }
+    },
+    "z.B. Algorithmen, Netzwerk, UI": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. algorithms, networking, UI"
+          }
+        }
+      }
+    },
+    "z.B. Binary Search in Python": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Binary Search in Python"
+          }
+        }
+      }
+    },
+    "z.B. MyApp, Studium, Arbeit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. MyApp, studies, work"
+          }
+        }
+      }
+    },
+    "·": {},
+    "Öffnen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        }
+      }
+    },
+    "Über Nook": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About Nook"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
