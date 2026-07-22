@@ -14,15 +14,18 @@ struct AddSnippetView: View {
     @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
 
+    @AppStorage("syntaxTheme") private var syntaxTheme: SyntaxTheme = .catppuccinMocha
+
     @State private var titel = ""
     @State private var code = ""
-    @State private var spracheName: String = Language.swift.rawValue
+    @State private var spracheName: String = Language.python.rawValue
     @State private var thema = ""
     @State private var projektName = ""
     @State private var schwierigkeit = 1
     @State private var beschreibung = ""
     @State private var outputText = ""
     @State private var tagsText = ""
+    @State private var editorModus: EditorModus = .editor
 
     private var kannSpeichern: Bool {
         !titel.trimmingCharacters(in: .whitespaces).isEmpty &&
@@ -37,6 +40,12 @@ struct AddSnippetView: View {
         Language(rawValue: spracheName)?.symbolName
             ?? customLanguages.first { $0.name == spracheName }?.symbolName
             ?? "doc.text"
+    }
+
+    private var effectiveHighlightName: String {
+        Language(rawValue: spracheName)?.highlightName
+            ?? customLanguages.first { $0.name == spracheName }?.highlightName
+            ?? "plaintext"
     }
 
     var body: some View {
@@ -78,18 +87,28 @@ struct AddSnippetView: View {
                     }
 
                     feldSektion("Sprache") {
-                        LazyVGrid(
-                            columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4),
-                            spacing: 6
-                        ) {
-                            ForEach(Language.allCases, id: \.self) { lang in
-                                spracheButton(name: lang.rawValue, symbol: lang.symbolName, farbe: lang.farbe)
+                        ForEach(Language.gruppen, id: \.titel) { gruppe in
+                            if gruppe.titel != Language.gruppen.first?.titel {
+                                Divider().padding(.top, 4)
+                            }
+                            Text(gruppe.titel.uppercased())
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(.tertiary).tracking(0.5)
+                                .padding(.top, 2)
+                            LazyVGrid(
+                                columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4),
+                                spacing: 6
+                            ) {
+                                ForEach(gruppe.sprachen, id: \.self) { lang in
+                                    spracheButton(name: lang.rawValue, symbol: lang.symbolName, farbe: lang.farbe)
+                                }
                             }
                         }
                         if !customLanguages.isEmpty {
+                            Divider().padding(.top, 4)
                             Text("EIGENE")
-                                .font(.caption2).fontWeight(.semibold)
-                                .foregroundStyle(.tertiary).tracking(0.5).padding(.top, 4)
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(.tertiary).tracking(0.5).padding(.top, 2)
                             LazyVGrid(
                                 columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4),
                                 spacing: 6
@@ -162,7 +181,6 @@ struct AddSnippetView: View {
     private var projektPicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                // "Kein Projekt" Option
                 Button { projektName = "" } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "xmark.circle")
@@ -207,11 +225,23 @@ struct AddSnippetView: View {
 
     private var rechterCodeEditor: some View {
         VStack(spacing: 0) {
-            HStack {
+            // Header mit Editor/Vorschau-Toggle
+            HStack(spacing: 8) {
                 Image(systemName: "chevron.left.forwardslash.chevron.right")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("Code").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
+
                 Spacer()
+
+                Picker("", selection: $editorModus) {
+                    ForEach(EditorModus.allCases, id: \.self) { modus in
+                        Text(modus.rawValue).tag(modus)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 150)
+                .labelsHidden()
+
                 if !code.isEmpty {
                     Text("\(code.components(separatedBy: "\n").count) Zeilen")
                         .font(.caption2).foregroundStyle(.tertiary).monospacedDigit()
@@ -222,9 +252,18 @@ struct AddSnippetView: View {
 
             Divider()
 
-            TextEditor(text: $code)
-                .font(.system(size: 13, design: .monospaced))
-                .scrollContentBackground(.hidden)
+            // Editor oder Vorschau
+            if editorModus == .editor {
+                TextEditor(text: $code)
+                    .font(.system(size: 13, design: .monospaced))
+                    .scrollContentBackground(.hidden)
+            } else {
+                CodeHighlightView(
+                    code: code.isEmpty ? "# Noch kein Code eingegeben…" : code,
+                    highlightName: effectiveHighlightName
+                )
+                .frame(maxHeight: .infinity, alignment: .topLeading)
+            }
 
             Divider()
 

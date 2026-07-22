@@ -15,6 +15,7 @@ struct MenuBarView: View {
     @Query(sort: \Snippet.createdAt, order: .reverse) private var snippets: [Snippet]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
 
     @State private var suchtext = ""
     @State private var kopierteID: PersistentIdentifier? = nil
@@ -156,7 +157,7 @@ struct MenuBarView: View {
                     Divider()
                 }
 
-                // Öffnen / Zähler / Beenden
+                // Öffnen / Zähler / Einstellungen / Beenden
                 HStack(spacing: 0) {
                     Button {
                         bringHauptfensterInVordergrund()
@@ -173,6 +174,19 @@ struct MenuBarView: View {
                     Text("\(snippets.count) Snippet\(snippets.count == 1 ? "" : "s")")
                         .font(.caption2).foregroundStyle(.tertiary)
                     Spacer()
+
+                    // Einstellungen öffnen
+                    Button {
+                        NSApp.setActivationPolicy(.regular)
+                        openSettings()
+                        NSApp.activate(ignoringOtherApps: true)
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 10).padding(.vertical, 8)
+                    .help("Einstellungen")
 
                     Button { NSApp.terminate(nil) } label: {
                         HStack(spacing: 5) { Text("Beenden"); Image(systemName: "power") }

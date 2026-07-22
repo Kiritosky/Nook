@@ -7,19 +7,72 @@ import SwiftUI
 import SwiftData
 import ServiceManagement
 
-struct SettingsView: View {
-    var body: some View {
-        TabView {
-            GeneralSettingsView()
-                .tabItem { Label("Allgemein", systemImage: "gearshape") }
-            AppearanceSettingsView()
-                .tabItem { Label("Erscheinungsbild", systemImage: "paintbrush") }
-            LanguageSettingsView()
-                .tabItem { Label("Sprachen", systemImage: "chevron.left.forwardslash.chevron.right") }
-            ProjektSettingsView()
-                .tabItem { Label("Projekte", systemImage: "folder.fill") }
+// MARK: - Settings Container
+
+enum SettingsSektion: String, Hashable, CaseIterable {
+    case allgemein, erscheinungsbild, sprachen, projekte
+
+    var titel: String {
+        switch self {
+        case .allgemein:       return "Allgemein"
+        case .erscheinungsbild: return "Erscheinungsbild"
+        case .sprachen:        return "Sprachen"
+        case .projekte:        return "Projekte"
         }
-        .frame(width: 580, height: 460)
+    }
+
+    var symbol: String {
+        switch self {
+        case .allgemein:       return "gearshape.fill"
+        case .erscheinungsbild: return "paintbrush.pointed.fill"
+        case .sprachen:        return "chevron.left.forwardslash.chevron.right"
+        case .projekte:        return "folder.fill"
+        }
+    }
+
+    var farbe: Color {
+        switch self {
+        case .allgemein:       return .secondary
+        case .erscheinungsbild: return .indigo
+        case .sprachen:        return .teal
+        case .projekte:        return .orange
+        }
+    }
+}
+
+struct SettingsView: View {
+    @State private var auswahl: SettingsSektion? = .erscheinungsbild
+
+    var body: some View {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
+            List(selection: $auswahl) {
+                ForEach(SettingsSektion.allCases, id: \.self) { sektion in
+                    Label {
+                        Text(sektion.titel)
+                    } icon: {
+                        Image(systemName: sektion.symbol)
+                            .foregroundStyle(sektion.farbe)
+                    }
+                    .tag(sektion)
+                }
+            }
+            .listStyle(.sidebar)
+            .navigationTitle("Einstellungen")
+            .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 200)
+        } detail: {
+            Group {
+                switch auswahl {
+                case .allgemein:       GeneralSettingsView()
+                case .erscheinungsbild: AppearanceSettingsView()
+                case .sprachen:        LanguageSettingsView()
+                case .projekte:        ProjektSettingsView()
+                case nil:
+                    ContentUnavailableView("Wähle eine Kategorie", systemImage: "gearshape")
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(width: 740, height: 520)
     }
 }
 
@@ -27,6 +80,13 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
+
+    private var versionString: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"
+    }
+    private var buildString: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "–"
+    }
 
     var body: some View {
         Form {
@@ -38,17 +98,32 @@ struct GeneralSettingsView: View {
                             else        { try SMAppService.mainApp.unregister() }
                         } catch { launchAtLogin = !newValue }
                     }
-            } header: { Text("Start") } footer: {
+            } header: {
+                Label("Start", systemImage: "power")
+            } footer: {
                 Text("Nook startet automatisch als Menüleisten-App, wenn du dich anmeldest.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
             Section {
-                LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–")
-                LabeledContent("Build",   value: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "–")
-            } header: { Text("Über Nook") }
+                LabeledContent("Version") {
+                    Text(versionString)
+                        .foregroundStyle(.secondary)
+                }
+                LabeledContent("Build") {
+                    Text(buildString)
+                        .foregroundStyle(.secondary)
+                }
+                LabeledContent("Plattform") {
+                    Text("macOS")
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Label("Über Nook", systemImage: "info.circle")
+            }
         }
         .formStyle(.grouped)
+        .navigationTitle("Allgemein")
     }
 }
 
@@ -59,16 +134,31 @@ struct AppearanceSettingsView: View {
     @AppStorage("codeFontSize")    private var codeFontSize: Double = 12.5
     @AppStorage("showCodePreview") private var showCodePreview: Bool = true
 
+    // Python-Beispielcode für die Live-Vorschau
+    private let vorschauCode = """
+def quicksort(arr: list) -> list:
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left  = [x for x in arr if x < pivot]
+    mid   = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + mid + quicksort(right)
+
+result = quicksort([3, 6, 8, 10, 1, 2, 1])
+print(result)  # [1, 1, 2, 3, 6, 8, 10]
+"""
+
     var body: some View {
         Form {
             Section {
                 Picker("Theme", selection: $syntaxTheme) {
                     ForEach(SyntaxTheme.allCases) { theme in
                         HStack(spacing: 8) {
-                            RoundedRectangle(cornerRadius: 3)
+                            RoundedRectangle(cornerRadius: 4)
                                 .fill(theme.hintergrundFarbe)
-                                .frame(width: 18, height: 18)
-                                .overlay(RoundedRectangle(cornerRadius: 3)
+                                .frame(width: 20, height: 20)
+                                .overlay(RoundedRectangle(cornerRadius: 4)
                                     .stroke(Color.secondary.opacity(0.3), lineWidth: 0.5))
                             Text(theme.rawValue)
                         }.tag(theme)
@@ -76,32 +166,47 @@ struct AppearanceSettingsView: View {
                 }
                 .pickerStyle(.menu)
 
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(syntaxTheme.hintergrundFarbe)
-                    .frame(height: 68)
-                    .overlay(alignment: .leading) {
-                        Text("func greet() {\n    print(\"Hallo, Nook!\")\n}")
-                            .font(.system(size: codeFontSize, design: .monospaced))
-                            .foregroundStyle(.white.opacity(0.85))
-                            .padding(10)
-                    }
-                    .animation(.easeInOut(duration: 0.2), value: syntaxTheme)
-            } header: { Text("Syntax Highlighting") }
+                // Live-Vorschau mit echtem Syntax Highlighting
+                CodeHighlightView(code: vorschauCode, highlightName: "python")
+                    .frame(height: 160)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.secondary.opacity(0.18), lineWidth: 0.5))
+                    .animation(.easeInOut(duration: 0.25), value: syntaxTheme)
+
+            } header: {
+                Label("Syntax Highlighting", systemImage: "paintpalette")
+            }
 
             Section {
-                HStack {
+                HStack(spacing: 12) {
                     Text("Schriftgröße")
                     Slider(value: $codeFontSize, in: 10...18, step: 0.5)
+                        .frame(maxWidth: 200)
                     Text("\(codeFontSize, specifier: "%.1f") pt")
-                        .monospacedDigit().foregroundStyle(.secondary).frame(width: 48, alignment: .trailing)
+                        .monospacedDigit().foregroundStyle(.secondary)
+                        .frame(width: 48, alignment: .trailing)
                 }
-            } header: { Text("Code-Schrift") }
+                // Mini-Vorschau der Schriftgröße
+                HStack {
+                    Text("Vorschau:")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text("let x = 42")
+                        .font(.system(size: CGFloat(codeFontSize), design: .monospaced))
+                        .foregroundStyle(.primary)
+                }
+            } header: {
+                Label("Code-Schrift", systemImage: "textformat.size")
+            }
 
             Section {
                 Toggle("Code-Vorschau in der Snippet-Liste anzeigen", isOn: $showCodePreview)
-            } header: { Text("Liste") }
+            } header: {
+                Label("Snippet-Liste", systemImage: "list.bullet.rectangle")
+            }
         }
         .formStyle(.grouped)
+        .navigationTitle("Erscheinungsbild")
     }
 }
 
@@ -124,26 +229,40 @@ struct LanguageSettingsView: View {
     var body: some View {
         VStack(spacing: 0) {
             List {
-                Section("Eingebaut (nicht löschbar)") {
-                    ForEach(Language.allCases, id: \.self) { lang in
-                        HStack {
-                            FarbIcon(symbol: lang.symbolName, farbe: lang.farbe, groesse: 22)
-                            Text(lang.rawValue).foregroundStyle(.secondary)
-                            Spacer()
-                            Text(lang.highlightName).font(.caption).foregroundStyle(.tertiary).fontDesign(.monospaced)
+                ForEach(Language.gruppen, id: \.titel) { gruppe in
+                    Section(gruppe.titel) {
+                        ForEach(gruppe.sprachen, id: \.self) { lang in
+                            HStack(spacing: 10) {
+                                FarbIcon(symbol: lang.symbolName, farbe: lang.farbe, groesse: 22)
+                                Text(lang.rawValue)
+                                Spacer()
+                                Text(lang.highlightName)
+                                    .font(.caption).foregroundStyle(.tertiary)
+                                    .fontDesign(.monospaced)
+                                    .padding(.horizontal, 6).padding(.vertical, 2)
+                                    .background(Color.secondary.opacity(0.08))
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                            }
                         }
                     }
                 }
+
                 Section("Eigene Sprachen") {
                     if customLanguages.isEmpty {
-                        Text("Noch keine eigenen Sprachen.").foregroundStyle(.tertiary).font(.caption)
+                        Text("Noch keine eigenen Sprachen.")
+                            .foregroundStyle(.tertiary).font(.caption)
                     } else {
                         ForEach(customLanguages) { lang in
-                            HStack {
+                            HStack(spacing: 10) {
                                 FarbIcon(symbol: lang.symbolName, farbe: .indigo, groesse: 22)
                                 Text(lang.name)
                                 Spacer()
-                                Text(lang.highlightName).font(.caption).foregroundStyle(.secondary).fontDesign(.monospaced)
+                                Text(lang.highlightName)
+                                    .font(.caption).foregroundStyle(.secondary)
+                                    .fontDesign(.monospaced)
+                                    .padding(.horizontal, 6).padding(.vertical, 2)
+                                    .background(Color.secondary.opacity(0.08))
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
                                 Button { modelContext.delete(lang) } label: {
                                     Image(systemName: "trash").font(.caption).foregroundStyle(.red.opacity(0.7))
                                 }
@@ -166,6 +285,7 @@ struct LanguageSettingsView: View {
             }
             .padding(12)
         }
+        .navigationTitle("Sprachen")
         .sheet(isPresented: $hinzufuegenAnzeigen, onDismiss: { neuName = ""; neuHighlight = ""; neuSymbol = "doc.text" }) {
             VStack(spacing: 20) {
                 HStack {
@@ -179,8 +299,8 @@ struct LanguageSettingsView: View {
                 .padding(.bottom, 4)
 
                 Form {
-                    TextField("Name (z.B. Rust)", text: $neuName)
-                    TextField("Highlight.js ID (z.B. rust)", text: $neuHighlight).fontDesign(.monospaced)
+                    TextField("Name (z.B. Elixir)", text: $neuName)
+                    TextField("Highlight-ID (z.B. elixir)", text: $neuHighlight).fontDesign(.monospaced)
                     Picker("Symbol", selection: $neuSymbol) {
                         Label("Dokument",  systemImage: "doc.text").tag("doc.text")
                         Label("Code",      systemImage: "chevron.left.forwardslash.chevron.right").tag("chevron.left.forwardslash.chevron.right")
@@ -280,6 +400,7 @@ struct ProjektSettingsView: View {
             }
             .padding(12)
         }
+        .navigationTitle("Projekte")
         .sheet(isPresented: $hinzufuegenAnzeigen, onDismiss: resetFelder) {
             projektHinzufuegenSheet
         }
@@ -287,7 +408,6 @@ struct ProjektSettingsView: View {
 
     private var projektHinzufuegenSheet: some View {
         VStack(spacing: 0) {
-            // Vorschau-Header
             HStack(spacing: 12) {
                 FarbIcon(symbol: neuSymbol, farbe: Color(hex: neuColorHex), groesse: 40)
                 VStack(alignment: .leading, spacing: 3) {
@@ -307,14 +427,12 @@ struct ProjektSettingsView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Name
                     VStack(alignment: .leading, spacing: 6) {
                         Text("NAME").font(.caption2).fontWeight(.semibold).foregroundStyle(.tertiary).tracking(0.5)
                         TextField("z.B. MyApp, Studium, Arbeit", text: $neuName)
                             .textFieldStyle(.roundedBorder)
                     }
 
-                    // Farbe
                     VStack(alignment: .leading, spacing: 8) {
                         Text("FARBE").font(.caption2).fontWeight(.semibold).foregroundStyle(.tertiary).tracking(0.5)
                         LazyVGrid(columns: Array(repeating: GridItem(.fixed(36), spacing: 8), count: 6), spacing: 8) {
@@ -337,7 +455,6 @@ struct ProjektSettingsView: View {
                         }
                     }
 
-                    // Symbol
                     VStack(alignment: .leading, spacing: 8) {
                         Text("SYMBOL").font(.caption2).fontWeight(.semibold).foregroundStyle(.tertiary).tracking(0.5)
                         LazyVGrid(columns: Array(repeating: GridItem(.fixed(44), spacing: 6), count: 5), spacing: 6) {

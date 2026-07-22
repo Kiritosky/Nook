@@ -23,6 +23,13 @@ extension Color {
     }
 }
 
+// MARK: - EditorModus
+
+enum EditorModus: String, CaseIterable {
+    case editor   = "Editor"
+    case vorschau = "Vorschau"
+}
+
 // MARK: - FarbIcon
 
 struct FarbIcon: View {
