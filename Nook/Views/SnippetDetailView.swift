@@ -53,15 +53,17 @@ struct SnippetDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
+                // Header füllt immer die volle Spaltenbreite
                 headerBereich
+
+                // Body ist auf max. 960 px limitiert (lesbar bei ultrawide)
                 VStack(alignment: .leading, spacing: 24) {
                     codeBereich
 
                     if let text = snippet.descriptionText, !text.isEmpty {
                         infoSektion(titel: "Beschreibung") {
                             Text(text)
-                                .font(.body)
-                                .lineSpacing(4)
+                                .font(.body).lineSpacing(4)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(14)
                                 .background(Color.primary.opacity(0.03))
@@ -89,8 +91,7 @@ struct SnippetDetailView: View {
                                     Button { tagFilter = tag } label: {
                                         TagPill(text: "#\(tag)", farbe: .purple)
                                     }
-                                    .buttonStyle(.plain)
-                                    .help("Nach #\(tag) filtern")
+                                    .buttonStyle(.plain).help("Nach #\(tag) filtern")
                                 }
                             }
                         }
@@ -107,12 +108,13 @@ struct SnippetDetailView: View {
                             Label(p, systemImage: "folder")
                         }
                     }
-                    .font(.caption)
-                    .foregroundStyle(.quaternary)
-                    .lineLimit(1)
+                    .font(.caption).foregroundStyle(.quaternary).lineLimit(1)
                 }
                 .padding(24)
+                // Lesbare Max-Breite – links ausgerichtet
+                .frame(maxWidth: 960, alignment: .leading)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -155,34 +157,37 @@ struct SnippetDetailView: View {
         ZStack(alignment: .bottomLeading) {
             LinearGradient(
                 stops: [
-                    .init(color: snippet.akzentFarbe.opacity(0.2), location: 0),
-                    .init(color: snippet.akzentFarbe.opacity(0.06), location: 0.65),
+                    .init(color: snippet.akzentFarbe.opacity(0.18), location: 0),
+                    .init(color: snippet.akzentFarbe.opacity(0.05), location: 0.6),
                     .init(color: .clear, location: 1)
                 ],
                 startPoint: .topLeading, endPoint: .bottomTrailing
             )
 
             Image(systemName: snippet.language.symbolName)
-                .font(.system(size: 90, weight: .black))
+                .font(.system(size: 80, weight: .heavy))
                 .foregroundStyle(snippet.akzentFarbe.opacity(0.05))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(.top, 12).padding(.trailing, 16)
+                .padding(.top, 12).padding(.trailing, 20)
                 .allowsHitTesting(false)
 
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
+                // Sprache + Aktionsbuttons
+                HStack(alignment: .center, spacing: 8) {
                     HStack(spacing: 5) {
                         FarbIcon(symbol: snippet.language.symbolName,
                                  farbe: snippet.akzentFarbe, groesse: 18)
                         Text(snippet.effectiveLanguageName)
                             .font(.caption).fontWeight(.semibold)
                             .foregroundStyle(snippet.akzentFarbe)
+                            .lineLimit(1)
                     }
                     .padding(.horizontal, 9).padding(.vertical, 4)
                     .background(snippet.akzentFarbe.opacity(0.12))
                     .clipShape(Capsule())
+                    .fixedSize()
 
-                    Spacer(minLength: 0)
+                    Spacer(minLength: 8)
 
                     headerButton(symbol: snippet.isPinned ? "pin.fill" : "pin",
                                  farbe: snippet.isPinned ? .orange : .secondary.opacity(0.4),
@@ -197,13 +202,15 @@ struct SnippetDetailView: View {
                     }
                 }
 
+                // Titel
                 Text(snippet.title)
-                    .font(.system(size: 24, weight: .bold))
+                    .font(.system(size: 22, weight: .bold))
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
                     .minimumScaleFactor(0.85)
 
-                HStack(spacing: 5) {
+                // Meta-Chips: wrappend statt HStack
+                FlexiWrap(spacing: 5) {
                     if snippet.difficulty >= 1 && snippet.difficulty <= 3 {
                         metaChip {
                             HStack(spacing: 3) {
@@ -215,20 +222,25 @@ struct SnippetDetailView: View {
                     }
                     if !snippet.topic.isEmpty {
                         metaChip {
-                            Label(snippet.topic, systemImage: "tag").font(.caption2).lineLimit(1)
+                            Label(snippet.topic, systemImage: "tag")
+                                .font(.caption2).lineLimit(1)
                         }
                     }
                     if let proj = snippet.project, !proj.isEmpty {
                         metaChip {
-                            Label(proj, systemImage: "folder").font(.caption2).lineLimit(1)
+                            Label(proj, systemImage: "folder")
+                                .font(.caption2).lineLimit(1)
                         }
                     }
                 }
                 .foregroundStyle(.secondary)
             }
             .padding(20)
+            // Header-Inhalt auch max 960 px (konsistent mit Body)
+            .frame(maxWidth: 960, alignment: .leading)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 2)
     }
 
     @ViewBuilder
@@ -244,8 +256,7 @@ struct SnippetDetailView: View {
                 .background(Color.primary.opacity(0.06))
                 .clipShape(Circle())
         }
-        .buttonStyle(.plain)
-        .help(help)
+        .buttonStyle(.plain).help(help)
     }
 
     @ViewBuilder
@@ -282,9 +293,7 @@ struct SnippetDetailView: View {
 
                 HStack(spacing: 10) {
                     Text("\(snippet.code.components(separatedBy: "\n").count) Z.")
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(0.25))
-                        .monospacedDigit()
+                        .font(.caption2).foregroundStyle(.white.opacity(0.25)).monospacedDigit()
 
                     Button { kopieren() } label: {
                         HStack(spacing: 4) {

@@ -15,17 +15,21 @@ struct MenuBarView: View {
     @Query(sort: \Snippet.createdAt, order: .reverse) private var snippets: [Snippet]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
     @Environment(\.openWindow) private var openWindow
-    @Environment(\.modelContext) private var modelContext
 
     @State private var suchtext = ""
     @State private var kopierteID: PersistentIdentifier? = nil
     @State private var expandedID: PersistentIdentifier? = nil
     @State private var filter: MenuBarFilter = .alle
-    @State private var clipboardSnippetAnzeigen = false
+
+    // Clipboard-Code wird über AppStorage an ContentView übergeben (Sheet kann
+    // nicht zuverlässig aus MenuBarExtra geöffnet werden)
+    @AppStorage("pendingClipboardCode") private var pendingClipboardCode: String = ""
 
     private var clipboardText: String? {
         let text = NSPasteboard.general.string(forType: .string)
-        return (text?.isEmpty == false) ? text : nil
+        guard let text, !text.isEmpty else { return nil }
+        // Nur sinnvollen Code-Text akzeptieren (nicht einzelne Wörter etc.)
+        return text.count > 3 ? text : nil
     }
 
     private var angezeigteSnippets: [Snippet] {
@@ -52,7 +56,8 @@ struct MenuBarView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Suchfeld
+
+            // MARK: Suchfeld
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary).font(.caption)
@@ -68,21 +73,21 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Filter-Tabs
+            // MARK: Filter-Tabs
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 5) {
-                    menuFilterChip(label: "Alle",      symbol: "square.stack.3d.up",  aktiv: filter == .alle)      { filter = .alle }
-                    menuFilterChip(label: "Favoriten", symbol: "star.fill",            aktiv: filter == .favoriten) { filter = .favoriten }
-                    menuFilterChip(label: "Angeheftet", symbol: "pin.fill",            aktiv: filter == .angeheftet) { filter = .angeheftet }
+                HStack(spacing: 4) {
+                    filterPill(label: "Alle",       icon: "tray.full",    aktiv: filter == .alle)      { filter = .alle }
+                    filterPill(label: "Favoriten",  icon: "star.fill",    aktiv: filter == .favoriten) { filter = .favoriten }
+                    filterPill(label: "Angeheftet", icon: "pin.fill",     aktiv: filter == .angeheftet) { filter = .angeheftet }
 
                     if !projekte.isEmpty {
                         Rectangle()
-                            .fill(Color.secondary.opacity(0.2))
-                            .frame(width: 1, height: 12)
-                            .padding(.horizontal, 2)
+                            .fill(Color.secondary.opacity(0.25))
+                            .frame(width: 1, height: 14)
+                            .padding(.horizontal, 3)
 
                         ForEach(projekte) { p in
-                            menuFilterChip(
+                            filterPill(
                                 label: p.name,
                                 farbe: p.farbe,
                                 aktiv: filter == .projekt(p.name)
@@ -92,21 +97,15 @@ struct MenuBarView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 10).padding(.vertical, 7)
+                .padding(.horizontal, 10).padding(.vertical, 6)
             }
-            .background(Color.primary.opacity(0.03))
+            .background(Color.primary.opacity(0.025))
 
             Divider()
 
-            // Snippet-Liste
+            // MARK: Snippet-Liste
             if angezeigteSnippets.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: filterEmptyIcon)
-                        .font(.largeTitle).foregroundStyle(.quaternary)
-                    Text(filterEmptyText)
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyState
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -117,15 +116,14 @@ struct MenuBarView: View {
                                 istExpanded: expandedID == snippet.persistentModelID,
                                 onKopieren: { kopieren(snippet) },
                                 onToggle: {
-                                    withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                                    withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
                                         expandedID = expandedID == snippet.persistentModelID
                                             ? nil : snippet.persistentModelID
                                     }
                                 }
                             )
-
                             if snippet.persistentModelID != angezeigteSnippets.last?.persistentModelID {
-                                Divider().padding(.leading, 44)
+                                Divider().padding(.leading, 48)
                             }
                         }
                     }
@@ -134,28 +132,34 @@ struct MenuBarView: View {
 
             Divider()
 
-            // Footer
+            // MARK: Footer
             VStack(spacing: 0) {
+                // Clipboard-Aktion
                 if let clip = clipboardText {
-                    Button { clipboardSnippetAnzeigen = true } label: {
+                    Button {
+                        pendingClipboardCode = clip
+                        bringHauptfensterInVordergrund()
+                    } label: {
                         HStack(spacing: 8) {
-                            Image(systemName: "doc.on.clipboard").frame(width: 20).foregroundStyle(.teal)
-                            Text("Snippet aus Zwischenablage").font(.caption).lineLimit(1)
+                            Image(systemName: "doc.on.clipboard")
+                                .frame(width: 22).foregroundStyle(.teal)
+                            Text("Snippet aus Zwischenablage")
+                                .font(.caption).lineLimit(1)
                             Spacer()
-                            Text(clip.prefix(20) + (clip.count > 20 ? "…" : ""))
+                            Text(clip.prefix(18) + (clip.count > 18 ? "…" : ""))
                                 .font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 8).contentShape(Rectangle())
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     Divider()
                 }
 
+                // Öffnen / Zähler / Beenden
                 HStack(spacing: 0) {
                     Button {
-                        openWindow(id: "hauptfenster")
-                        NSApp.setActivationPolicy(.regular)
-                        NSApp.activate(ignoringOtherApps: true)
+                        bringHauptfensterInVordergrund()
                     } label: {
                         HStack(spacing: 5) {
                             Image(systemName: "macwindow")
@@ -166,7 +170,8 @@ struct MenuBarView: View {
                     .buttonStyle(.plain).padding(.horizontal, 12).padding(.vertical, 8)
 
                     Spacer()
-                    Text("\(snippets.count) Snippets").font(.caption2).foregroundStyle(.tertiary)
+                    Text("\(snippets.count) Snippet\(snippets.count == 1 ? "" : "s")")
+                        .font(.caption2).foregroundStyle(.tertiary)
                     Spacer()
 
                     Button { NSApp.terminate(nil) } label: {
@@ -178,38 +183,53 @@ struct MenuBarView: View {
             }
         }
         .frame(width: 360, height: 460)
-        .sheet(isPresented: $clipboardSnippetAnzeigen) {
-            AddSnippetView(initialCode: clipboardText ?? "")
-        }
     }
 
-    // MARK: - Hilfscomponents
+    // MARK: - Filter-Pill
 
     @ViewBuilder
-    private func menuFilterChip(
+    private func filterPill(
         label: String,
-        symbol: String? = nil,
+        icon: String? = nil,
         farbe: Color = .accentColor,
         aktiv: Bool,
         aktion: @escaping () -> Void
     ) -> some View {
         Button(action: aktion) {
             HStack(spacing: 4) {
-                if let symbol {
-                    Image(systemName: symbol).font(.system(size: 8, weight: .semibold))
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 9, weight: .semibold))
                 } else {
-                    Circle().fill(farbe).frame(width: 6, height: 6)
+                    Circle().fill(farbe).frame(width: 7, height: 7)
                 }
-                Text(label).font(.system(size: 11, weight: aktiv ? .semibold : .regular))
+                Text(label)
+                    .font(.system(size: 11, weight: aktiv ? .semibold : .regular))
+                    .lineLimit(1)
             }
             .padding(.horizontal, 9).padding(.vertical, 4)
-            .background(aktiv ? farbe.opacity(0.18) : Color.secondary.opacity(0.08))
+            .background(aktiv ? farbe.opacity(0.15) : Color.secondary.opacity(0.07))
             .foregroundStyle(aktiv ? farbe : Color.secondary)
             .clipShape(Capsule())
             .overlay(Capsule().stroke(aktiv ? farbe.opacity(0.4) : Color.clear, lineWidth: 1))
             .animation(.easeInOut(duration: 0.15), value: aktiv)
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: 10) {
+            Image(systemName: filterEmptyIcon)
+                .font(.system(size: 28, weight: .light))
+                .foregroundStyle(.quaternary)
+            Text(filterEmptyText)
+                .font(.caption).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(20)
     }
 
     private var filterEmptyIcon: String {
@@ -223,11 +243,23 @@ struct MenuBarView: View {
 
     private var filterEmptyText: String {
         switch filter {
-        case .alle:       return suchtext.isEmpty ? "Noch keine Snippets" : "Keine Treffer"
-        case .favoriten:  return "Keine Favoriten"
-        case .angeheftet: return "Keine angehefteten Snippets"
-        case .projekt(let p): return "Keine Snippets in \"\(p)\""
+        case .alle:               return suchtext.isEmpty ? "Noch keine Snippets" : "Keine Treffer für \"\(suchtext)\""
+        case .favoriten:          return "Keine Favoriten vorhanden"
+        case .angeheftet:         return "Keine angehefteten Snippets"
+        case .projekt(let p):     return "Keine Snippets in \"\(p)\""
         }
+    }
+
+    // Bestehendes Hauptfenster in den Vordergrund holen statt neues zu öffnen.
+    // openWindow() erzeugt immer eine neue WindowGroup-Instanz – das wollen wir vermeiden.
+    private func bringHauptfensterInVordergrund() {
+        NSApp.setActivationPolicy(.regular)
+        if let fenster = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }) {
+            fenster.makeKeyAndOrderFront(nil)
+        } else {
+            openWindow(id: "hauptfenster")
+        }
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func kopieren(_ snippet: Snippet) {
@@ -260,9 +292,8 @@ struct MenuBarZeile: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Haupt-Zeile
             HStack(spacing: 0) {
-                // Expand-Button (tapper)
+                // Zeilen-Body → Toggle
                 Button(action: onToggle) {
                     HStack(spacing: 10) {
                         FarbIcon(symbol: snippet.language.symbolName,
@@ -277,47 +308,44 @@ struct MenuBarZeile: View {
                                     .font(.caption2).foregroundStyle(.secondary)
                                 if let proj = snippet.project, !proj.isEmpty {
                                     Text("·").foregroundStyle(.quaternary).font(.caption2)
-                                    Text(proj).font(.caption2).foregroundStyle(.tertiary)
+                                    Text(proj).font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
                                 }
                             }
                         }
 
-                        Spacer()
+                        Spacer(minLength: 4)
 
                         Image(systemName: istExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 9, weight: .medium))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.quaternary)
                     }
                     .padding(.leading, 12).padding(.vertical, 10)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
-                // Copy-Button
+                // Copy-Button → separat
                 Button(action: onKopieren) {
                     Image(systemName: istKopiert ? "checkmark" : "doc.on.doc")
                         .font(.caption)
                         .foregroundStyle(istKopiert ? .green : .secondary)
-                        .animation(.easeInOut(duration: 0.2), value: istKopiert)
-                        .frame(width: 36, height: 44)
+                        .animation(.easeInOut(duration: 0.15), value: istKopiert)
+                        .frame(width: 38, height: 46)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
-            // Code-Vorschau (wenn ausgeklappt)
+            // Code-Vorschau (aufgeklappt)
             if istExpanded && !codePreview.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(codePreview)
-                        .font(.system(size: 10.5, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.82))
-                        .lineLimit(5)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(11)
-                }
-                .background(Color.black.opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 0))
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                Text(codePreview)
+                    .font(.system(size: 10.5, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.8))
+                    .lineLimit(5)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 12).padding(.vertical, 10)
+                    .background(Color.black.opacity(0.55))
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
     }

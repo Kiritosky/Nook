@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var addSnippetAnzeigen = false
     @State private var tagFilter: String? = nil
 
+    // Clipboard-to-Snippet: MenuBar schreibt hier rein, ContentView öffnet den Sheet
+    @AppStorage("pendingClipboardCode") private var pendingClipboardCode: String = ""
+
     var body: some View {
         NavigationSplitView {
             SidebarView(auswahl: $sidebarAuswahl)
@@ -35,14 +38,25 @@ struct ContentView: View {
                 )
             }
         }
-        .sheet(isPresented: $addSnippetAnzeigen) {
-            AddSnippetView()
+        .sheet(isPresented: $addSnippetAnzeigen, onDismiss: { pendingClipboardCode = "" }) {
+            AddSnippetView(initialCode: pendingClipboardCode)
+        }
+        // MenuBar übergibt Clipboard-Text über AppStorage
+        .onChange(of: pendingClipboardCode) { _, new in
+            if !new.isEmpty { addSnippetAnzeigen = true }
         }
         .onChange(of: alleSnippets) { _, snippets in
             SpotlightManager.indexAll(snippets)
         }
         .onAppear {
             SpotlightManager.indexAll(alleSnippets)
+            // Bestehendes Fenster: onAppear feuert bevor onChange den initial gesetzten
+            // AppStorage-Wert erkennt → kurze Verzögerung, dann Sheet öffnen
+            guard !pendingClipboardCode.isEmpty else { return }
+            Task {
+                try? await Task.sleep(for: .milliseconds(300))
+                addSnippetAnzeigen = true
+            }
         }
     }
 }
