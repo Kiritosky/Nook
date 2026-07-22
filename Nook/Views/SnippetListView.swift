@@ -49,9 +49,12 @@ struct SnippetListView: View {
         switch sidebarItem {
         case .alle:                    gefiltert = alleSnippets
         case .favoriten:               gefiltert = alleSnippets.filter { $0.isFavorite }
+        case .angeheftet:              gefiltert = alleSnippets.filter { $0.isPinned }
         case .sprache(let lang):       gefiltert = alleSnippets.filter { $0.language == lang && $0.languageOverride == nil }
         case .customSprache(let name): gefiltert = alleSnippets.filter { $0.languageOverride == name }
         case .projekt(let proj):       gefiltert = alleSnippets.filter { $0.project == proj }
+        case .tag(let tag):            gefiltert = alleSnippets.filter { $0.tags.contains(tag) }
+        case .thema(let thema):        gefiltert = alleSnippets.filter { $0.topic == thema }
         }
 
         let sortiert: [Snippet]
@@ -62,6 +65,8 @@ struct SnippetListView: View {
         case .zuleztGeoeffnet: sortiert = gefiltert.sorted { ($0.lastAccessedAt ?? $0.createdAt) > ($1.lastAccessedAt ?? $1.createdAt) }
         }
 
+        // Angeheftete immer zuerst (außer wenn wir schon nach Angehefteten filtern)
+        if case .angeheftet = sidebarItem { return sortiert }
         return sortiert.sorted { $0.isPinned && !$1.isPinned }
     }
 
@@ -99,10 +104,10 @@ struct SnippetListView: View {
             // Filter-Chips
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    FilterChip(label: "Alle",          symbol: "square.grid.2x2",      aktiv: schwierigkeitsFilter == nil) { schwierigkeitsFilter = nil }
-                    FilterChip(label: "Anfänger",      symbol: "circle.fill",           aktiv: schwierigkeitsFilter == 1)   { schwierigkeitsFilter = schwierigkeitsFilter == 1 ? nil : 1 }
+                    FilterChip(label: "Alle",          symbol: "square.grid.2x2",       aktiv: schwierigkeitsFilter == nil) { schwierigkeitsFilter = nil }
+                    FilterChip(label: "Anfänger",      symbol: "circle.fill",            aktiv: schwierigkeitsFilter == 1)   { schwierigkeitsFilter = schwierigkeitsFilter == 1 ? nil : 1 }
                     FilterChip(label: "Mittel",        symbol: "circle.lefthalf.filled", aktiv: schwierigkeitsFilter == 2)  { schwierigkeitsFilter = schwierigkeitsFilter == 2 ? nil : 2 }
-                    FilterChip(label: "Fortgeschritten", symbol: "record.circle",       aktiv: schwierigkeitsFilter == 3)   { schwierigkeitsFilter = schwierigkeitsFilter == 3 ? nil : 3 }
+                    FilterChip(label: "Fortgeschritten", symbol: "record.circle",        aktiv: schwierigkeitsFilter == 3)   { schwierigkeitsFilter = schwierigkeitsFilter == 3 ? nil : 3 }
                 }
                 .padding(.horizontal, 12).padding(.vertical, 7)
             }
@@ -173,16 +178,19 @@ struct SnippetListView: View {
         switch sidebarItem {
         case .alle:                    return "Alle Snippets"
         case .favoriten:               return "Favoriten"
+        case .angeheftet:              return "Angeheftet"
         case .sprache(let lang):       return lang.rawValue
         case .customSprache(let name): return name
         case .projekt(let proj):       return proj
+        case .tag(let tag):            return "#\(tag)"
+        case .thema(let thema):        return thema
         }
     }
 
     private var emptyState: some View {
-        let istLeer     = alleSnippets.isEmpty
+        let istLeer      = alleSnippets.isEmpty
         let istTagFilter = tagFilter != nil
-        let istSuche    = !suchtext.isEmpty
+        let istSuche     = !suchtext.isEmpty
 
         return VStack(spacing: 20) {
             ZStack {
@@ -256,7 +264,6 @@ struct SnippetKarte: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Akzentbalken
             LinearGradient(
                 colors: [snippet.akzentFarbe, snippet.akzentFarbe.opacity(0.3)],
                 startPoint: .top, endPoint: .bottom
@@ -270,7 +277,6 @@ struct SnippetKarte: View {
                              farbe: snippet.akzentFarbe, groesse: 26)
                         .padding(.top, 1)
 
-                    // Titel + Untertitel
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
                             if snippet.isPinned {
@@ -299,7 +305,6 @@ struct SnippetKarte: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .layoutPriority(1)
 
-                    // Rechts: Stern + Sterne + Datum (fixiert)
                     VStack(alignment: .trailing, spacing: 3) {
                         HStack(spacing: 4) {
                             if snippet.isFavorite {

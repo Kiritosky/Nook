@@ -39,7 +39,6 @@ struct FarbIcon: View {
                     .font(.system(size: groesse * 0.44, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            // Spekulares Highlight (Glasoptik)
             .overlay(alignment: .top) {
                 RoundedRectangle(cornerRadius: groesse * 0.26)
                     .fill(
@@ -193,5 +192,74 @@ struct SidebarZeile: View {
         }
         .padding(.vertical, 1)
         .contentShape(Rectangle())
+    }
+}
+
+// MARK: - TagSidebarZeile
+
+struct TagSidebarZeile: View {
+    let tag: String
+    let anzahl: Int
+
+    var body: some View {
+        HStack(spacing: 7) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(Color.purple.opacity(0.15))
+                    .frame(width: 22, height: 22)
+                Text("#")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.purple.opacity(0.8))
+            }
+            Text(tag)
+                .font(.system(.callout, weight: .medium))
+                .lineLimit(1)
+                .foregroundStyle(.primary)
+            Spacer(minLength: 0)
+            Text("\(anzahl)")
+                .font(.caption2).foregroundStyle(.tertiary)
+                .padding(.horizontal, 6).padding(.vertical, 2)
+                .background(Color.secondary.opacity(0.12))
+                .clipShape(Capsule())
+        }
+        .padding(.vertical, 1)
+        .contentShape(Rectangle())
+    }
+}
+
+// MARK: - ProjektPill (für Add/Edit Snippet)
+
+struct ProjektPill: View {
+    let name: String
+    let farbe: Color
+    let symbol: String
+    let aktiv: Bool
+    let aktion: () -> Void
+
+    var body: some View {
+        Button(action: aktion) {
+            HStack(spacing: 5) {
+                Circle()
+                    .fill(farbe)
+                    .frame(width: 8, height: 8)
+                Text(name)
+                    .font(.caption)
+                    .fontWeight(aktiv ? .semibold : .regular)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(aktiv ? farbe.opacity(0.15) : Color.secondary.opacity(0.07))
+            .foregroundStyle(aktiv ? farbe : Color.primary)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(
+                    aktiv ? farbe.opacity(0.5) : Color.secondary.opacity(0.2),
+                    lineWidth: aktiv ? 1.5 : 0.5
+                )
+            )
+            .animation(.easeInOut(duration: 0.15), value: aktiv)
+        }
+        .buttonStyle(.plain)
     }
 }

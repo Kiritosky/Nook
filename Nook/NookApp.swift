@@ -11,7 +11,7 @@ struct NookApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([Snippet.self, CustomLanguage.self])
+        let schema = Schema([Snippet.self, CustomLanguage.self, Projekt.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
             return try ModelContainer(for: schema, configurations: [config])
@@ -52,7 +52,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let center = NotificationCenter.default
 
-        // Wenn ein normales Fenster aktiv wird → regular (nötig für Fullscreen-Exit)
         center.addObserver(
             forName: NSWindow.didBecomeMainNotification,
             object: nil,
@@ -61,7 +60,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.setActivationPolicy(.regular)
         }
 
-        // Wenn Vollbild betreten wird → sicherstellen dass .regular aktiv ist
         center.addObserver(
             forName: NSWindow.willEnterFullScreenNotification,
             object: nil,
@@ -70,13 +68,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.setActivationPolicy(.regular)
         }
 
-        // Wenn Fenster geschlossen: prüfen ob noch ein Hauptfenster offen ist
         center.addObserver(
             forName: NSWindow.willCloseNotification,
             object: nil,
             queue: .main
         ) { _ in
-            // Kurz warten damit das Fenster aus NSApp.windows entfernt wird
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 let hatHauptfenster = NSApp.windows.contains {
                     $0.isVisible && $0.canBecomeMain

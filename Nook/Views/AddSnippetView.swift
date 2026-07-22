@@ -12,12 +12,13 @@ struct AddSnippetView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
+    @Query(sort: \Projekt.name) private var projekte: [Projekt]
 
     @State private var titel = ""
     @State private var code = ""
     @State private var spracheName: String = Language.swift.rawValue
     @State private var thema = ""
-    @State private var projekt = ""
+    @State private var projektName = ""
     @State private var schwierigkeit = 1
     @State private var beschreibung = ""
     @State private var outputText = ""
@@ -51,19 +52,15 @@ struct AddSnippetView: View {
         }
     }
 
-    // MARK: - Linke Spalte (Metadaten)
+    // MARK: - Linke Spalte
 
     private var linkeMetadaten: some View {
         VStack(spacing: 0) {
-            // Farbiger Header
             HStack(spacing: 12) {
                 FarbIcon(symbol: gewaehltesSymbol, farbe: gewaehlteFarbe, groesse: 38)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Neues Snippet")
-                        .font(.headline)
-                    Text(spracheName)
-                        .font(.caption)
-                        .foregroundStyle(gewaehlteFarbe)
+                    Text("Neues Snippet").font(.headline)
+                    Text(spracheName).font(.caption).foregroundStyle(gewaehlteFarbe)
                 }
                 Spacer()
             }
@@ -75,13 +72,11 @@ struct AddSnippetView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Titel
                     feldSektion("Titel") {
                         TextField("z.B. Binary Search in Python", text: $titel)
                             .textFieldStyle(.roundedBorder)
                     }
 
-                    // Sprachauswahl
                     feldSektion("Sprache") {
                         LazyVGrid(
                             columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4),
@@ -91,14 +86,10 @@ struct AddSnippetView: View {
                                 spracheButton(name: lang.rawValue, symbol: lang.symbolName, farbe: lang.farbe)
                             }
                         }
-
                         if !customLanguages.isEmpty {
                             Text("EIGENE")
-                                .font(.caption2)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.tertiary)
-                                .tracking(0.5)
-                                .padding(.top, 4)
+                                .font(.caption2).fontWeight(.semibold)
+                                .foregroundStyle(.tertiary).tracking(0.5).padding(.top, 4)
                             LazyVGrid(
                                 columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 4),
                                 spacing: 6
@@ -110,19 +101,15 @@ struct AddSnippetView: View {
                         }
                     }
 
-                    // Thema
                     feldSektion("Thema") {
                         TextField("z.B. Algorithmen, Netzwerk, UI", text: $thema)
                             .textFieldStyle(.roundedBorder)
                     }
 
-                    // Projekt
-                    feldSektion("Projekt (optional)") {
-                        TextField("z.B. MyApp, Studium", text: $projekt)
-                            .textFieldStyle(.roundedBorder)
+                    feldSektion("Projekt") {
+                        projektPicker
                     }
 
-                    // Schwierigkeit
                     feldSektion("Schwierigkeit") {
                         HStack(spacing: 6) {
                             ForEach(1...3, id: \.self) { stufe in
@@ -132,18 +119,12 @@ struct AddSnippetView: View {
                                         Text(["", "Anfänger", "Mittel", "Profi"][stufe])
                                             .font(.system(size: 9))
                                     }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 7)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 7)
                                     .background(schwierigkeit == stufe ? gewaehlteFarbe.opacity(0.15) : Color.clear)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 7)
-                                            .stroke(
-                                                schwierigkeit == stufe
-                                                    ? gewaehlteFarbe.opacity(0.5)
-                                                    : Color.secondary.opacity(0.18),
-                                                lineWidth: 1
-                                            )
-                                    )
+                                    .overlay(RoundedRectangle(cornerRadius: 7)
+                                        .stroke(schwierigkeit == stufe
+                                                ? gewaehlteFarbe.opacity(0.5)
+                                                : Color.secondary.opacity(0.18), lineWidth: 1))
                                     .clipShape(RoundedRectangle(cornerRadius: 7))
                                 }
                                 .buttonStyle(.plain)
@@ -151,10 +132,11 @@ struct AddSnippetView: View {
                         }
                     }
 
-                    // Tags
-                    feldSektion("Tags (optional)") {
+                    feldSektion("Tags") {
                         TextField("array, sort, performance", text: $tagsText)
                             .textFieldStyle(.roundedBorder)
+                        Text("Mehrere Tags mit Komma trennen")
+                            .font(.caption2).foregroundStyle(.tertiary)
                     }
                 }
                 .padding(16)
@@ -162,7 +144,6 @@ struct AddSnippetView: View {
 
             Divider()
 
-            // Buttons
             HStack {
                 Button("Abbrechen") { dismiss() }
                     .keyboardShortcut(.escape, modifiers: [])
@@ -176,29 +157,67 @@ struct AddSnippetView: View {
         }
     }
 
+    // MARK: - Projekt-Picker
+
+    private var projektPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                // "Kein Projekt" Option
+                Button { projektName = "" } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "xmark.circle")
+                            .font(.system(size: 9))
+                        Text("Keins")
+                            .font(.caption)
+                            .fontWeight(projektName.isEmpty ? .semibold : .regular)
+                    }
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(projektName.isEmpty
+                                ? Color.secondary.opacity(0.2)
+                                : Color.secondary.opacity(0.07))
+                    .foregroundStyle(projektName.isEmpty ? Color.primary : Color.secondary)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(
+                        projektName.isEmpty ? Color.secondary.opacity(0.4) : Color.secondary.opacity(0.15),
+                        lineWidth: projektName.isEmpty ? 1.5 : 0.5
+                    ))
+                }
+                .buttonStyle(.plain)
+
+                ForEach(projekte) { p in
+                    ProjektPill(
+                        name: p.name,
+                        farbe: p.farbe,
+                        symbol: p.symbolName,
+                        aktiv: projektName == p.name
+                    ) { projektName = p.name }
+                }
+
+                if projekte.isEmpty {
+                    Text("Projekte in Einstellungen → Projekte anlegen")
+                        .font(.caption2).foregroundStyle(.tertiary)
+                        .fixedSize()
+                }
+            }
+        }
+        .padding(.vertical, 2)
+    }
+
     // MARK: - Rechte Spalte (Code)
 
     private var rechterCodeEditor: some View {
         VStack(spacing: 0) {
-            // Code-Header
             HStack {
                 Image(systemName: "chevron.left.forwardslash.chevron.right")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("Code")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("Code").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
                 Spacer()
                 if !code.isEmpty {
                     Text("\(code.components(separatedBy: "\n").count) Zeilen")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .monospacedDigit()
+                        .font(.caption2).foregroundStyle(.tertiary).monospacedDigit()
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 14).padding(.vertical, 9)
             .background(Color.primary.opacity(0.03))
 
             Divider()
@@ -209,35 +228,22 @@ struct AddSnippetView: View {
 
             Divider()
 
-            // Beschreibung und Output als kompakte Footer-Felder
             VStack(spacing: 0) {
                 HStack(alignment: .top) {
-                    Image(systemName: "text.alignleft")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .padding(.top, 2)
+                    Image(systemName: "text.alignleft").font(.caption2).foregroundStyle(.tertiary).padding(.top, 2)
                     TextField("Beschreibung (optional)", text: $beschreibung, axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .font(.callout)
-                        .lineLimit(2...4)
+                        .textFieldStyle(.plain).font(.callout).lineLimit(2...4)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
+                .padding(.horizontal, 14).padding(.vertical, 9)
 
                 Divider()
 
                 HStack(alignment: .top) {
-                    Image(systemName: "terminal")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                        .padding(.top, 2)
+                    Image(systemName: "terminal").font(.caption2).foregroundStyle(.tertiary).padding(.top, 2)
                     TextField("Beispiel-Output (optional)", text: $outputText, axis: .vertical)
-                        .textFieldStyle(.plain)
-                        .font(.system(.caption, design: .monospaced))
-                        .lineLimit(2...3)
+                        .textFieldStyle(.plain).font(.system(.caption, design: .monospaced)).lineLimit(2...3)
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
+                .padding(.horizontal, 14).padding(.vertical, 9)
             }
             .background(Color.primary.opacity(0.02))
         }
@@ -249,10 +255,7 @@ struct AddSnippetView: View {
     private func feldSektion<C: View>(_ label: String, @ViewBuilder content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label.uppercased())
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundStyle(.tertiary)
-                .tracking(0.5)
+                .font(.caption2).fontWeight(.semibold).foregroundStyle(.tertiary).tracking(0.5)
             content()
         }
     }
@@ -262,23 +265,14 @@ struct AddSnippetView: View {
         let gewaehlt = spracheName == name
         Button { spracheName = name } label: {
             VStack(spacing: 4) {
-                FarbIcon(
-                    symbol: symbol,
-                    farbe: gewaehlt ? farbe : .secondary.opacity(0.6),
-                    groesse: 28
-                )
-                Text(name)
-                    .font(.system(size: 9))
-                    .lineLimit(1)
+                FarbIcon(symbol: symbol, farbe: gewaehlt ? farbe : .secondary.opacity(0.6), groesse: 28)
+                Text(name).font(.system(size: 9)).lineLimit(1)
                     .foregroundStyle(gewaehlt ? farbe : Color.secondary)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity).padding(.vertical, 6)
             .background(gewaehlt ? farbe.opacity(0.12) : Color.clear)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(gewaehlt ? farbe.opacity(0.45) : Color.clear, lineWidth: 1.5)
-            )
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .stroke(gewaehlt ? farbe.opacity(0.45) : Color.clear, lineWidth: 1.5))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .animation(.easeInOut(duration: 0.15), value: gewaehlt)
         }
@@ -300,7 +294,7 @@ struct AddSnippetView: View {
             code: code,
             language: builtIn ?? .other,
             topic: thema,
-            project: projekt.isEmpty ? nil : projekt,
+            project: projektName.isEmpty ? nil : projektName,
             difficulty: schwierigkeit,
             tags: tags,
             descriptionText: beschreibung.isEmpty ? nil : beschreibung,
@@ -309,6 +303,7 @@ struct AddSnippetView: View {
             customHighlightName: customHighlight
         )
         modelContext.insert(snippet)
+        SpotlightManager.index(snippet)
         dismiss()
     }
 }
