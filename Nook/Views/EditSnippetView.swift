@@ -58,7 +58,8 @@ struct EditSnippetView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            linkeMetadaten.frame(width: 310)
+            linkeMetadaten
+                .frame(width: 310)
             Divider()
             rechterCodeEditor
         }

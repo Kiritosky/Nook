@@ -154,6 +154,7 @@ class Snippet {
     var isFavorite: Bool
     var isPinned: Bool
     var lastAccessedAt: Date?
+    var copyCount: Int
 
     var languageOverride: String?
     var customHighlightName: String?
@@ -194,6 +195,7 @@ class Snippet {
         self.isFavorite = isFavorite
         self.isPinned = isPinned
         self.lastAccessedAt = nil
+        self.copyCount = 0
         self.languageOverride = languageOverride
         self.customHighlightName = customHighlightName
     }

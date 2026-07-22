@@ -80,6 +80,7 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
+    @AppStorage("globalShortcut") private var globalShortcutRaw: String = StoredShortcut.defaultGlobal.rawValue
 
     private var versionString: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"
@@ -87,6 +88,22 @@ struct GeneralSettingsView: View {
     private var buildString: String {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "–"
     }
+
+    // Binding: konvertiert zwischen String (AppStorage) und StoredShortcut?
+    private var globalShortcutBinding: Binding<StoredShortcut?> {
+        Binding(
+            get: { StoredShortcut(rawValue: globalShortcutRaw) },
+            set: { globalShortcutRaw = $0?.rawValue ?? "" }
+        )
+    }
+
+    private let inAppShortcuts: [(String, String)] = [
+        ("⌘N",       "Neues Snippet erstellen"),
+        ("⌘E",       "Snippet bearbeiten"),
+        ("⌘⇧C",      "Code kopieren"),
+        ("⌘,",       "Einstellungen öffnen"),
+        ("?",        "Kürzel-Übersicht anzeigen"),
+    ]
 
     var body: some View {
         Form {
@@ -105,18 +122,55 @@ struct GeneralSettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
 
+            // MARK: Globaler Shortcut
+            Section {
+                LabeledContent("Nook öffnen") {
+                    HStack(spacing: 10) {
+                        ShortcutRecorder(shortcut: globalShortcutBinding)
+                            .frame(width: 160, height: 26)
+
+                        if globalShortcutRaw != StoredShortcut.defaultGlobal.rawValue {
+                            Button("Zurücksetzen") {
+                                globalShortcutRaw = StoredShortcut.defaultGlobal.rawValue
+                            }
+                            .buttonStyle(.borderless)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Label("Globaler Shortcut", systemImage: "keyboard.badge.ellipsis")
+            } footer: {
+                Text("Klicke auf das Feld und drücke eine Tastenkombination (mindestens ⌘, ⌥, ⌃ oder ⇧). Mit ⌫ wird das Kürzel gelöscht.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            // MARK: In-App Kürzel (Referenz)
+            Section {
+                ForEach(inAppShortcuts, id: \.0) { item in
+                    LabeledContent(item.1) {
+                        Text(item.0)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } header: {
+                Label("In-App Kürzel", systemImage: "keyboard")
+            } footer: {
+                Text("Diese Kürzel folgen macOS-Konventionen und können nicht geändert werden.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section {
                 LabeledContent("Version") {
-                    Text(versionString)
-                        .foregroundStyle(.secondary)
+                    Text(versionString).foregroundStyle(.secondary)
                 }
                 LabeledContent("Build") {
-                    Text(buildString)
-                        .foregroundStyle(.secondary)
+                    Text(buildString).foregroundStyle(.secondary)
                 }
                 LabeledContent("Plattform") {
-                    Text("macOS")
-                        .foregroundStyle(.secondary)
+                    Text("macOS").foregroundStyle(.secondary)
                 }
             } header: {
                 Label("Über Nook", systemImage: "info.circle")
@@ -133,6 +187,9 @@ struct AppearanceSettingsView: View {
     @AppStorage("syntaxTheme")     private var syntaxTheme: SyntaxTheme = .catppuccinMocha
     @AppStorage("codeFontSize")    private var codeFontSize: Double = 12.5
     @AppStorage("showCodePreview") private var showCodePreview: Bool = true
+    @AppStorage("autoTheme")       private var autoTheme: Bool = false
+    @AppStorage("autoThemeDark")   private var autoThemeDark: SyntaxTheme = .catppuccinMocha
+    @AppStorage("autoThemeLight")  private var autoThemeLight: SyntaxTheme = .xcodeLight
 
     // Python-Beispielcode für die Live-Vorschau
     private let vorschauCode = """
@@ -197,6 +254,34 @@ print(result)  # [1, 1, 2, 3, 6, 8, 10]
                 }
             } header: {
                 Label("Code-Schrift", systemImage: "textformat.size")
+            }
+
+            Section {
+                Toggle("Automatisch mit System-Modus wechseln", isOn: $autoTheme)
+                    .onChange(of: autoTheme) { _, on in
+                        if !on { return }
+                        // Sofort anwenden wenn aktiviert
+                    }
+
+                if autoTheme {
+                    Picker("Helles Theme", selection: $autoThemeLight) {
+                        ForEach(SyntaxTheme.allCases.filter { $0.isLight }) { theme in
+                            Text(theme.rawValue).tag(theme)
+                        }
+                    }
+                    Picker("Dunkles Theme", selection: $autoThemeDark) {
+                        ForEach(SyntaxTheme.allCases.filter { !$0.isLight }) { theme in
+                            Text(theme.rawValue).tag(theme)
+                        }
+                    }
+                }
+            } header: {
+                Label("Auto-Theme", systemImage: "circle.lefthalf.filled")
+            } footer: {
+                if autoTheme {
+                    Text("Das Syntax-Theme wechselt automatisch mit dem macOS Dark/Light Mode.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
 
             Section {

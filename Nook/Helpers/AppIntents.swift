@@ -75,31 +75,6 @@ struct SnippetsAuflistenIntent: AppIntent {
     }
 }
 
-// MARK: - App Shortcuts (Siri / Spotlight Suggestions)
-
-struct NookShortcuts: AppShortcutsProvider {
-    static var appShortcuts: [AppShortcut] {
-        AppShortcut(
-            intent: SnippetKopierenIntent(),
-            phrases: ["Snippet kopieren in \(.applicationName)"],
-            shortTitle: "Snippet kopieren",
-            systemImageName: "doc.on.doc"
-        )
-        AppShortcut(
-            intent: SnippetCodeAbrufenIntent(),
-            phrases: ["Snippet-Code aus \(.applicationName) abrufen"],
-            shortTitle: "Snippet-Code abrufen",
-            systemImageName: "curlybraces"
-        )
-        AppShortcut(
-            intent: SnippetsAuflistenIntent(),
-            phrases: ["Alle Snippets in \(.applicationName) anzeigen"],
-            shortTitle: "Snippets auflisten",
-            systemImageName: "list.bullet"
-        )
-    }
-}
-
 // MARK: - Fehler
 
 enum NookIntentFehler: Error, CustomLocalizedStringResourceConvertible {

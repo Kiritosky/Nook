@@ -47,6 +47,9 @@ struct NookApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
 
+    private var globalShortcutMonitor: Any?
+    private var localShortcutMonitor: Any?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
@@ -80,6 +83,53 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 if !hatHauptfenster {
                     NSApp.setActivationPolicy(.accessory)
                 }
+            }
+        }
+
+        // Globalen Shortcut registrieren (liest aus UserDefaults)
+        registriereGlobalenShortcut()
+
+        // Bei Einstellungsänderung neu registrieren
+        center.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.registriereGlobalenShortcut()
+        }
+    }
+
+    private func registriereGlobalenShortcut() {
+        // Alte Monitore entfernen
+        if let m = globalShortcutMonitor { NSEvent.removeMonitor(m); globalShortcutMonitor = nil }
+        if let m = localShortcutMonitor  { NSEvent.removeMonitor(m); localShortcutMonitor  = nil }
+
+        // Shortcut aus UserDefaults — Fallback auf Standard (⌘⇧Space)
+        let raw = UserDefaults.standard.string(forKey: "globalShortcut")
+            ?? StoredShortcut.defaultGlobal.rawValue
+        guard let shortcut = StoredShortcut(rawValue: raw) else { return }
+
+        let passt: (NSEvent) -> Bool = { event in
+            let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting(.capsLock)
+            return mods == shortcut.modifiers && event.keyCode == shortcut.keyCode
+        }
+
+        globalShortcutMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard passt(event) else { return }
+            self?.nookFensterTogglen()
+        }
+        localShortcutMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard passt(event) else { return event }
+            self?.nookFensterTogglen()
+            return nil
+        }
+    }
+
+    private func nookFensterTogglen() {
+        DispatchQueue.main.async {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+            let hauptfenster = NSApp.windows.first { !$0.isKind(of: NSPanel.self) && $0.canBecomeMain }
+            if let w = hauptfenster {
+                w.makeKeyAndOrderFront(nil)
+            } else {
+                NSApp.windows.first?.makeKeyAndOrderFront(nil)
             }
         }
     }

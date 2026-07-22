@@ -104,6 +104,9 @@ struct SnippetDetailView: View {
                             Label(last.formatted(.relative(presentation: .named)),
                                   systemImage: "eye")
                         }
+                        if snippet.copyCount > 0 {
+                            Label("\(snippet.copyCount)×", systemImage: "doc.on.doc")
+                        }
                         if let p = snippet.project, !p.isEmpty {
                             Label(p, systemImage: "folder")
                         }
@@ -336,6 +339,7 @@ struct SnippetDetailView: View {
     private func kopieren() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(snippet.code, forType: .string)
+        snippet.copyCount += 1
         kodeCopied = true
         Task { try? await Task.sleep(for: .seconds(1.5)); kodeCopied = false }
     }
@@ -361,7 +365,8 @@ struct ShortcutsOverlay: View {
     @Environment(\.dismiss) private var dismiss
     private let shortcuts: [(String, String)] = [
         ("⌘N", "Neues Snippet"), ("⌘E", "Snippet bearbeiten"),
-        ("⇧⌘C", "Code kopieren"), ("⌘,", "Einstellungen"), ("?", "Diese Übersicht"),
+        ("⇧⌘C", "Code kopieren"), ("⌘,", "Einstellungen"),
+        ("⌘⇧Space", "Nook von überall aufrufen"), ("?", "Diese Übersicht"),
     ]
 
     var body: some View {
