@@ -2,22 +2,19 @@
 //  NookApp.swift
 //  Nook
 //
-//  Created by Lasse Gröne on 20.07.26.
-//
 
 import SwiftUI
 import SwiftData
 
 @main
 struct NookApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Snippet.self,
-            CustomLanguage.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let schema = Schema([Snippet.self, CustomLanguage.self])
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(for: schema, configurations: [config])
         } catch {
             fatalError("ModelContainer konnte nicht erstellt werden: \(error)")
         }
@@ -30,14 +27,11 @@ struct NookApp: App {
         }
         .defaultSize(width: 1200, height: 760)
         .modelContainer(sharedModelContainer)
-        .commands {
-            CommandGroup(replacing: .appSettings) {
-                // Standard-Einstellungen via Settings-Scene
-            }
-        }
 
-        MenuBarExtra("Nook", systemImage: "doc.text") {
+        MenuBarExtra {
             MenuBarView()
+        } label: {
+            Image(systemName: "curlybraces")
         }
         .menuBarExtraStyle(.window)
         .modelContainer(sharedModelContainer)
@@ -46,5 +40,55 @@ struct NookApp: App {
             SettingsView()
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+// MARK: - AppDelegate
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
+
+        let center = NotificationCenter.default
+
+        // Wenn ein normales Fenster aktiv wird → regular (nötig für Fullscreen-Exit)
+        center.addObserver(
+            forName: NSWindow.didBecomeMainNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            NSApp.setActivationPolicy(.regular)
+        }
+
+        // Wenn Vollbild betreten wird → sicherstellen dass .regular aktiv ist
+        center.addObserver(
+            forName: NSWindow.willEnterFullScreenNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            NSApp.setActivationPolicy(.regular)
+        }
+
+        // Wenn Fenster geschlossen: prüfen ob noch ein Hauptfenster offen ist
+        center.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Kurz warten damit das Fenster aus NSApp.windows entfernt wird
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                let hatHauptfenster = NSApp.windows.contains {
+                    $0.isVisible && $0.canBecomeMain
+                }
+                if !hatHauptfenster {
+                    NSApp.setActivationPolicy(.accessory)
+                }
+            }
+        }
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
     }
 }

@@ -5,16 +5,58 @@
 
 import SwiftUI
 import SwiftData
+import ServiceManagement
 
 struct SettingsView: View {
     var body: some View {
         TabView {
+            GeneralSettingsView()
+                .tabItem { Label("Allgemein", systemImage: "gearshape") }
             AppearanceSettingsView()
                 .tabItem { Label("Erscheinungsbild", systemImage: "paintbrush") }
             LanguageSettingsView()
                 .tabItem { Label("Sprachen", systemImage: "chevron.left.forwardslash.chevron.right") }
         }
-        .frame(width: 540, height: 420)
+        .frame(width: 560, height: 440)
+    }
+}
+
+// MARK: - Allgemein
+
+struct GeneralSettingsView: View {
+    @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Beim Anmelden starten", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { _, newValue in
+                        do {
+                            if newValue {
+                                try SMAppService.mainApp.register()
+                            } else {
+                                try SMAppService.mainApp.unregister()
+                            }
+                        } catch {
+                            launchAtLogin = !newValue
+                        }
+                    }
+            } header: {
+                Text("Start")
+            } footer: {
+                Text("Nook startet automatisch als Menüleisten-App, wenn du dich anmeldest.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
+                LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–")
+                LabeledContent("Build", value: Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "–")
+            } header: {
+                Text("Über Nook")
+            }
+        }
+        .formStyle(.grouped)
     }
 }
 
@@ -45,16 +87,17 @@ struct AppearanceSettingsView: View {
                 }
                 .pickerStyle(.menu)
 
-                // Vorschau des gewählten Themes
+                // Theme-Vorschau
                 RoundedRectangle(cornerRadius: 8)
                     .fill(syntaxTheme.hintergrundFarbe)
-                    .frame(height: 60)
+                    .frame(height: 68)
                     .overlay(alignment: .leading) {
                         Text("func greet() {\n    print(\"Hallo, Nook!\")\n}")
                             .font(.system(size: codeFontSize, design: .monospaced))
                             .foregroundStyle(.white.opacity(0.85))
                             .padding(10)
                     }
+                    .animation(.easeInOut(duration: 0.2), value: syntaxTheme)
             } header: { Text("Syntax Highlighting") }
 
             Section {
@@ -98,14 +141,15 @@ struct LanguageSettingsView: View {
                 Section("Eingebaut (nicht löschbar)") {
                     ForEach(Language.allCases, id: \.self) { lang in
                         HStack {
-                            Label(lang.rawValue, systemImage: lang.symbolName)
+                            FarbIcon(symbol: lang.symbolName, farbe: lang.farbe, groesse: 22)
+                            Text(lang.rawValue)
+                                .foregroundStyle(.secondary)
                             Spacer()
                             Text(lang.highlightName)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.tertiary)
                                 .fontDesign(.monospaced)
                         }
-                        .foregroundStyle(.secondary)
                     }
                 }
 
@@ -117,16 +161,23 @@ struct LanguageSettingsView: View {
                     } else {
                         ForEach(customLanguages) { lang in
                             HStack {
-                                Label(lang.name, systemImage: lang.symbolName)
+                                FarbIcon(symbol: lang.symbolName, farbe: .indigo, groesse: 22)
+                                Text(lang.name)
                                 Spacer()
                                 Text(lang.highlightName)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .fontDesign(.monospaced)
+                                Button {
+                                    modelContext.delete(lang)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.caption)
+                                        .foregroundStyle(.red.opacity(0.7))
+                                }
+                                .buttonStyle(.plain)
+                                .help("Sprache löschen")
                             }
-                        }
-                        .onDelete { indexSet in
-                            indexSet.forEach { modelContext.delete(customLanguages[$0]) }
                         }
                     }
                 }
@@ -142,7 +193,7 @@ struct LanguageSettingsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 Spacer()
-                Text("\(customLanguages.count) eigene Sprachen")
+                Text("\(customLanguages.count) eigene \(customLanguages.count == 1 ? "Sprache" : "Sprachen")")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -150,8 +201,18 @@ struct LanguageSettingsView: View {
         }
         .sheet(isPresented: $hinzufuegenAnzeigen, onDismiss: resetFelder) {
             VStack(spacing: 20) {
-                Text("Neue Sprache")
-                    .font(.headline)
+                HStack {
+                    FarbIcon(symbol: neuSymbol, farbe: .indigo, groesse: 32)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Neue Sprache")
+                            .font(.headline)
+                        Text(neuName.isEmpty ? "Name eingeben..." : neuName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.bottom, 4)
 
                 Form {
                     TextField("Name (z.B. Rust)", text: $neuName)
@@ -165,10 +226,12 @@ struct LanguageSettingsView: View {
                         Label("Datenbank", systemImage: "cylinder").tag("cylinder")
                         Label("Gehirn", systemImage: "brain").tag("brain")
                         Label("Netz", systemImage: "network").tag("network")
+                        Label("Blitz", systemImage: "bolt").tag("bolt")
+                        Label("Terminal", systemImage: "terminal").tag("terminal")
                     }
                 }
                 .formStyle(.grouped)
-                .frame(height: 200)
+                .frame(height: 220)
 
                 HStack {
                     Button("Abbrechen") { hinzufuegenAnzeigen = false }
@@ -187,7 +250,7 @@ struct LanguageSettingsView: View {
                 }
             }
             .padding(20)
-            .frame(width: 380)
+            .frame(width: 400)
         }
     }
 

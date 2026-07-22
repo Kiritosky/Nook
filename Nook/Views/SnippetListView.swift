@@ -7,15 +7,26 @@ import SwiftUI
 import SwiftData
 
 enum Sortierung: String, CaseIterable {
-    case neueste  = "neueste"
-    case aelteste = "aelteste"
-    case titel    = "titel"
+    case neueste        = "neueste"
+    case aelteste       = "aelteste"
+    case titel          = "titel"
+    case zuleztGeoeffnet = "zuleztGeoeffnet"
 
     var bezeichnung: String {
         switch self {
-        case .neueste:  return "Neueste zuerst"
-        case .aelteste: return "Älteste zuerst"
-        case .titel:    return "Nach Titel"
+        case .neueste:         return "Neueste zuerst"
+        case .aelteste:        return "Älteste zuerst"
+        case .titel:           return "Nach Titel (A–Z)"
+        case .zuleztGeoeffnet: return "Zuletzt geöffnet"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .neueste:         return "clock.arrow.trianglehead.counterclockwise.rotate.90"
+        case .aelteste:        return "clock"
+        case .titel:           return "textformat.abc"
+        case .zuleztGeoeffnet: return "eye"
         }
     }
 }
@@ -27,34 +38,49 @@ struct SnippetListView: View {
     let sidebarItem: SidebarItem
     @Binding var selectedSnippet: Snippet?
     @Binding var addSnippetAnzeigen: Bool
+    @Binding var tagFilter: String?
 
     @State private var suchtext = ""
     @State private var schwierigkeitsFilter: Int? = nil
     @AppStorage("snippetSortierung") private var sortierung: Sortierung = .neueste
 
     private var basisSnippets: [Snippet] {
-        let basis: [Snippet]
+        let gefiltert: [Snippet]
         switch sidebarItem {
-        case .alle:                    basis = alleSnippets
-        case .favoriten:               basis = alleSnippets.filter { $0.isFavorite }
-        case .sprache(let lang):       basis = alleSnippets.filter { $0.language == lang && $0.languageOverride == nil }
-        case .customSprache(let name): basis = alleSnippets.filter { $0.languageOverride == name }
-        case .projekt(let proj):       basis = alleSnippets.filter { $0.project == proj }
+        case .alle:                    gefiltert = alleSnippets
+        case .favoriten:               gefiltert = alleSnippets.filter { $0.isFavorite }
+        case .sprache(let lang):       gefiltert = alleSnippets.filter { $0.language == lang && $0.languageOverride == nil }
+        case .customSprache(let name): gefiltert = alleSnippets.filter { $0.languageOverride == name }
+        case .projekt(let proj):       gefiltert = alleSnippets.filter { $0.project == proj }
         }
+
+        let sortiert: [Snippet]
         switch sortierung {
-        case .neueste:  return basis.sorted { $0.createdAt > $1.createdAt }
-        case .aelteste: return basis.sorted { $0.createdAt < $1.createdAt }
-        case .titel:    return basis.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .neueste:
+            sortiert = gefiltert.sorted { $0.createdAt > $1.createdAt }
+        case .aelteste:
+            sortiert = gefiltert.sorted { $0.createdAt < $1.createdAt }
+        case .titel:
+            sortiert = gefiltert.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .zuleztGeoeffnet:
+            sortiert = gefiltert.sorted {
+                ($0.lastAccessedAt ?? $0.createdAt) > ($1.lastAccessedAt ?? $1.createdAt)
+            }
         }
+
+        // Gepinnte immer ganz oben
+        return sortiert.sorted { $0.isPinned && !$1.isPinned }
     }
 
     private var gefilterteSnippets: [Snippet] {
         var r = basisSnippets
         if let s = schwierigkeitsFilter { r = r.filter { $0.difficulty == s } }
+        if let tag = tagFilter { r = r.filter { $0.tags.contains(tag) } }
         guard !suchtext.isEmpty else { return r }
         return r.filter {
             $0.title.localizedCaseInsensitiveContains(suchtext) ||
             $0.topic.localizedCaseInsensitiveContains(suchtext) ||
+            $0.code.localizedCaseInsensitiveContains(suchtext) ||
             $0.effectiveLanguageName.localizedCaseInsensitiveContains(suchtext) ||
             $0.tags.joined(separator: " ").localizedCaseInsensitiveContains(suchtext)
         }
@@ -62,17 +88,44 @@ struct SnippetListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Filter-Leiste
+            // Aktiver Tag-Filter Banner
+            if let tag = tagFilter {
+                HStack(spacing: 6) {
+                    Image(systemName: "tag.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.purple)
+                    Text("#\(tag)")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.purple)
+                    Spacer()
+                    Button { tagFilter = nil } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(Color.purple.opacity(0.08))
+
+                Divider()
+            }
+
+            // Schwierigkeits-Filter-Chips
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    FilterChip(label: "Alle", aktiv: schwierigkeitsFilter == nil) { schwierigkeitsFilter = nil }
-                    FilterChip(label: "Anfänger", aktiv: schwierigkeitsFilter == 1) {
+                    FilterChip(label: "Alle", symbol: "square.grid.2x2", aktiv: schwierigkeitsFilter == nil) {
+                        schwierigkeitsFilter = nil
+                    }
+                    FilterChip(label: "Anfänger", symbol: "circle.fill", aktiv: schwierigkeitsFilter == 1) {
                         schwierigkeitsFilter = schwierigkeitsFilter == 1 ? nil : 1
                     }
-                    FilterChip(label: "Mittel", aktiv: schwierigkeitsFilter == 2) {
+                    FilterChip(label: "Mittel", symbol: "circle.lefthalf.filled", aktiv: schwierigkeitsFilter == 2) {
                         schwierigkeitsFilter = schwierigkeitsFilter == 2 ? nil : 2
                     }
-                    FilterChip(label: "Fortgeschritten", aktiv: schwierigkeitsFilter == 3) {
+                    FilterChip(label: "Fortgeschritten", symbol: "record.circle", aktiv: schwierigkeitsFilter == 3) {
                         schwierigkeitsFilter = schwierigkeitsFilter == 3 ? nil : 3
                     }
                 }
@@ -88,19 +141,35 @@ struct SnippetListView: View {
                 emptyState
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 8) {
+                    LazyVStack(spacing: 7) {
                         ForEach(gefilterteSnippets) { snippet in
                             SnippetKarte(snippet: snippet, istAusgewaehlt: selectedSnippet == snippet)
                                 .onTapGesture { selectedSnippet = snippet }
                                 .contextMenu {
+                                    Button {
+                                        snippet.isPinned.toggle()
+                                    } label: {
+                                        Label(snippet.isPinned ? "Losgelöst" : "Anheften",
+                                              systemImage: snippet.isPinned ? "pin.slash" : "pin")
+                                    }
+
                                     Button {
                                         snippet.isFavorite.toggle()
                                     } label: {
                                         Label(snippet.isFavorite ? "Aus Favoriten entfernen" : "Zu Favoriten",
                                               systemImage: snippet.isFavorite ? "star.slash" : "star")
                                     }
+
+                                    Button {
+                                        duplizieren(snippet)
+                                    } label: {
+                                        Label("Duplizieren", systemImage: "doc.on.doc")
+                                    }
+
                                     Divider()
+
                                     Button(role: .destructive) {
+                                        SpotlightManager.remove(snippet)
                                         modelContext.delete(snippet)
                                         if selectedSnippet == snippet { selectedSnippet = nil }
                                     } label: {
@@ -128,7 +197,7 @@ struct SnippetListView: View {
                 Menu {
                     Picker("Sortierung", selection: $sortierung) {
                         ForEach(Sortierung.allCases, id: \.self) { s in
-                            Text(s.bezeichnung).tag(s)
+                            Label(s.bezeichnung, systemImage: s.symbolName).tag(s)
                         }
                     }
                 } label: {
@@ -149,20 +218,73 @@ struct SnippetListView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 14) {
-            Image(systemName: suchtext.isEmpty ? "doc.text.magnifyingglass" : "magnifyingglass")
-                .font(.system(size: 44))
-                .foregroundStyle(.quaternary)
-            Text(suchtext.isEmpty ? "Keine Snippets" : "Keine Treffer")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-            Text(suchtext.isEmpty ? "Erstelle dein erstes Snippet mit ⌘N." : "Versuche einen anderen Suchbegriff.")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.center)
+        let istLeer = alleSnippets.isEmpty
+        let istTagFilter = tagFilter != nil
+        let istSuche = !suchtext.isEmpty
+
+        return VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.08))
+                    .frame(width: 72, height: 72)
+                Image(systemName: istTagFilter ? "tag.slash" : istSuche ? "magnifyingglass" : "curlybraces")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundStyle(Color.accentColor.opacity(0.6))
+                    .symbolEffect(.pulse, isActive: istSuche)
+            }
+
+            VStack(spacing: 6) {
+                Text(istTagFilter ? "Kein Snippet mit diesem Tag"
+                     : istSuche ? "Keine Treffer"
+                     : "Noch keine Snippets")
+                    .font(.headline)
+
+                Text(istTagFilter ? "Tag-Filter aufheben um alle zu sehen."
+                     : istSuche ? "Versuche einen anderen Begriff."
+                     : "Erstelle dein erstes Snippet und leg los.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            if istLeer && !istSuche && !istTagFilter {
+                Button {
+                    addSnippetAnzeigen = true
+                } label: {
+                    Label("Erstes Snippet erstellen", systemImage: "plus")
+                        .font(.callout)
+                        .fontWeight(.medium)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            } else if istTagFilter {
+                Button("Filter aufheben") {
+                    tagFilter = nil
+                }
+                .buttonStyle(.bordered)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(32)
+    }
+
+    private func duplizieren(_ original: Snippet) {
+        let kopie = Snippet(
+            title: "\(original.title) (Kopie)",
+            code: original.code,
+            language: original.language,
+            topic: original.topic,
+            project: original.project,
+            difficulty: original.difficulty,
+            tags: original.tags,
+            descriptionText: original.descriptionText,
+            output: original.output,
+            languageOverride: original.languageOverride,
+            customHighlightName: original.customHighlightName
+        )
+        modelContext.insert(kopie)
+        SpotlightManager.index(kopie)
+        selectedSnippet = kopie
     }
 }
 
@@ -171,7 +293,10 @@ struct SnippetListView: View {
 struct SnippetKarte: View {
     let snippet: Snippet
     let istAusgewaehlt: Bool
+
     @AppStorage("showCodePreview") private var showCodePreview: Bool = true
+    @State private var istKopiert = false
+    @State private var isHovered = false
 
     private var codeVorschau: String {
         snippet.code
@@ -181,79 +306,165 @@ struct SnippetKarte: View {
             .joined(separator: "\n")
     }
 
+    private var relativDatum: String {
+        (snippet.lastAccessedAt ?? snippet.createdAt)
+            .formatted(.relative(presentation: .named, unitsStyle: .abbreviated))
+    }
+
     var body: some View {
         HStack(spacing: 0) {
-            // Farbiger Akzentbalken links
-            RoundedRectangle(cornerRadius: 2)
-                .fill(snippet.akzentFarbe.gradient)
-                .frame(width: 4)
+            // Akzentbalken
+            LinearGradient(
+                colors: [snippet.akzentFarbe, snippet.akzentFarbe.opacity(0.3)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(width: 4)
 
-            VStack(alignment: .leading, spacing: 6) {
-                // Zeile 1: Titel + Favorit
-                HStack(alignment: .firstTextBaseline) {
-                    Text(snippet.title)
-                        .font(.system(.subheadline, weight: .semibold))
-                        .lineLimit(1)
+            // Karteninhalt
+            VStack(alignment: .leading, spacing: 7) {
+                // Header: Icon + Titel + Badges rechts
+                HStack(alignment: .center, spacing: 9) {
+                    FarbIcon(
+                        symbol: snippet.language.symbolName,
+                        farbe: snippet.akzentFarbe,
+                        groesse: 28
+                    )
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack(spacing: 4) {
+                            if snippet.isPinned {
+                                Image(systemName: "pin.fill")
+                                    .font(.system(size: 8))
+                                    .foregroundStyle(.orange)
+                                    .rotationEffect(.degrees(45))
+                            }
+                            Text(snippet.title)
+                                .font(.system(.subheadline, weight: .semibold))
+                                .lineLimit(1)
+                        }
+
+                        HStack(spacing: 4) {
+                            Text(snippet.effectiveLanguageName)
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(snippet.akzentFarbe)
+                            if !snippet.topic.isEmpty {
+                                Text("·").foregroundStyle(.quaternary).font(.caption2)
+                                Text(snippet.topic)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                    }
+
                     Spacer(minLength: 4)
-                    if snippet.isFavorite {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(.yellow)
-                    }
-                }
 
-                // Zeile 2: Sprache + Schwierigkeit + Thema
-                HStack(spacing: 5) {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(snippet.akzentFarbe)
-                            .frame(width: 7, height: 7)
-                        Text(snippet.effectiveLanguageName)
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(snippet.akzentFarbe)
-                    }
-
-                    SchwierigkeitSterne(stufe: snippet.difficulty)
-
-                    if !snippet.topic.isEmpty {
-                        Text("·")
+                    // Rechts: Stern + Schwierigkeit + Datum
+                    VStack(alignment: .trailing, spacing: 3) {
+                        HStack(spacing: 5) {
+                            if snippet.isFavorite {
+                                Image(systemName: "star.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.yellow)
+                            }
+                            SchwierigkeitSterne(stufe: snippet.difficulty)
+                        }
+                        Text(relativDatum)
+                            .font(.system(size: 9))
                             .foregroundStyle(.quaternary)
-                        Text(snippet.topic)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
+                            .monospacedDigit()
                     }
                 }
 
-                // Zeile 3: Code-Vorschau
+                // Tags-Zeile
+                if !snippet.tags.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(snippet.tags.prefix(3), id: \.self) { tag in
+                            Text("#\(tag)")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.purple.opacity(0.9))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.purple.opacity(0.1))
+                                .clipShape(Capsule())
+                        }
+                        if snippet.tags.count > 3 {
+                            Text("+\(snippet.tags.count - 3)")
+                                .font(.system(size: 9))
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+
+                // Code-Vorschau
                 if showCodePreview && !codeVorschau.isEmpty {
                     Text(codeVorschau)
                         .font(.system(size: 10.5, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.secondary.opacity(0.9))
                         .lineLimit(2)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 5)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 6)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.primary.opacity(0.05))
+                        .background(Color.primary.opacity(0.04))
                         .clipShape(RoundedRectangle(cornerRadius: 5))
                 }
             }
-            .padding(.horizontal, 11)
-            .padding(.vertical, 9)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
         }
         .background(
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 11)
                 .fill(istAusgewaehlt
-                      ? snippet.akzentFarbe.opacity(0.12)
+                      ? snippet.akzentFarbe.opacity(0.1)
                       : Color(nsColor: .controlBackgroundColor))
-                .shadow(color: .black.opacity(0.06), radius: 2, x: 0, y: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: 11))
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(istAusgewaehlt ? snippet.akzentFarbe.opacity(0.4) : Color.primary.opacity(0.07), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 11)
+                .stroke(
+                    istAusgewaehlt ? snippet.akzentFarbe.opacity(0.4) : Color.primary.opacity(0.07),
+                    lineWidth: istAusgewaehlt ? 1.5 : 1
+                )
         )
-        .animation(.easeInOut(duration: 0.15), value: istAusgewaehlt)
+        .shadow(
+            color: istAusgewaehlt
+                ? snippet.akzentFarbe.opacity(0.22)
+                : isHovered ? Color.black.opacity(0.08) : Color.black.opacity(0.04),
+            radius: istAusgewaehlt ? 10 : isHovered ? 5 : 2,
+            x: 0,
+            y: istAusgewaehlt ? 4 : isHovered ? 2 : 1
+        )
+        // Hover-Kopieren
+        .overlay(alignment: .topTrailing) {
+            if isHovered || istKopiert {
+                Button { kopieren() } label: {
+                    Image(systemName: istKopiert ? "checkmark" : "doc.on.doc")
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(istKopiert ? .green : .secondary)
+                        .padding(6)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(.plain)
+                .padding(7)
+                .transition(.opacity.combined(with: .scale(0.82, anchor: .topTrailing)))
+            }
+        }
+        .scaleEffect(isHovered && !istAusgewaehlt ? 1.004 : 1.0)
+        .onHover { isHovered = $0 }
+        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
+        .animation(.easeInOut(duration: 0.18), value: istAusgewaehlt)
+    }
+
+    private func kopieren() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(snippet.code, forType: .string)
+        istKopiert = true
+        Task {
+            try? await Task.sleep(for: .seconds(1.5))
+            istKopiert = false
+        }
     }
 }

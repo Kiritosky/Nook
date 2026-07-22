@@ -23,7 +23,7 @@ extension Color {
     }
 }
 
-// MARK: - FarbIcon (iOS-style farbiges Icon)
+// MARK: - FarbIcon
 
 struct FarbIcon: View {
     let symbol: String
@@ -31,15 +31,35 @@ struct FarbIcon: View {
     var groesse: CGFloat = 28
 
     var body: some View {
-        RoundedRectangle(cornerRadius: groesse * 0.28)
+        RoundedRectangle(cornerRadius: groesse * 0.26)
             .fill(farbe.gradient)
             .frame(width: groesse, height: groesse)
             .overlay {
                 Image(systemName: symbol)
-                    .font(.system(size: groesse * 0.46, weight: .semibold))
+                    .font(.system(size: groesse * 0.44, weight: .semibold))
                     .foregroundStyle(.white)
             }
-            .shadow(color: farbe.opacity(0.35), radius: 3, x: 0, y: 2)
+            // Spekulares Highlight (Glasoptik)
+            .overlay(alignment: .top) {
+                RoundedRectangle(cornerRadius: groesse * 0.26)
+                    .fill(
+                        LinearGradient(
+                            colors: [.white.opacity(0.28), .clear],
+                            startPoint: .top,
+                            endPoint: .center
+                        )
+                    )
+                    .frame(width: groesse, height: groesse * 0.52)
+                    .clipShape(
+                        .rect(
+                            topLeadingRadius: groesse * 0.26,
+                            bottomLeadingRadius: 0,
+                            bottomTrailingRadius: 0,
+                            topTrailingRadius: groesse * 0.26
+                        )
+                    )
+            }
+            .shadow(color: farbe.opacity(0.45), radius: groesse * 0.18, x: 0, y: groesse * 0.1)
     }
 }
 
@@ -53,11 +73,12 @@ struct TagPill: View {
         Text(text)
             .font(.caption)
             .fontWeight(.medium)
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 9)
             .padding(.vertical, 3)
-            .background(farbe.opacity(0.15))
+            .background(farbe.opacity(0.12))
             .foregroundStyle(farbe)
             .clipShape(Capsule())
+            .overlay(Capsule().stroke(farbe.opacity(0.2), lineWidth: 0.5))
     }
 }
 
@@ -65,19 +86,31 @@ struct TagPill: View {
 
 struct FilterChip: View {
     let label: String
+    var symbol: String? = nil
     let aktiv: Bool
     let aktion: () -> Void
 
     var body: some View {
         Button(action: aktion) {
-            Text(label)
-                .font(.caption)
-                .fontWeight(aktiv ? .semibold : .regular)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(aktiv ? Color.accentColor : Color.secondary.opacity(0.12))
-                .foregroundStyle(aktiv ? .white : .primary)
-                .clipShape(Capsule())
+            HStack(spacing: 4) {
+                if let symbol {
+                    Image(systemName: symbol)
+                        .font(.system(size: 9, weight: .semibold))
+                }
+                Text(label)
+                    .font(.caption)
+                    .fontWeight(aktiv ? .semibold : .regular)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(aktiv ? Color.accentColor : Color.secondary.opacity(0.1))
+            .foregroundStyle(aktiv ? .white : .primary)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(aktiv ? Color.clear : Color.secondary.opacity(0.15), lineWidth: 0.5)
+            )
+            .animation(.spring(response: 0.22, dampingFraction: 0.75), value: aktiv)
         }
         .buttonStyle(.plain)
     }
@@ -89,12 +122,17 @@ struct SectionHeader: View {
     let titel: String
 
     var body: some View {
-        Text(titel)
-            .font(.caption)
-            .fontWeight(.semibold)
-            .foregroundStyle(.secondary)
-            .textCase(.uppercase)
-            .tracking(0.8)
+        HStack(spacing: 7) {
+            Capsule()
+                .fill(Color.accentColor.opacity(0.5))
+                .frame(width: 3, height: 11)
+            Text(titel)
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .tracking(0.8)
+        }
     }
 }
 
@@ -108,7 +146,7 @@ struct SchwierigkeitSterne: View {
             ForEach(1...3, id: \.self) { i in
                 Image(systemName: i <= stufe ? "circle.fill" : "circle")
                     .font(.system(size: 6, weight: .bold))
-                    .foregroundStyle(i <= stufe ? stufenFarbe : Color.secondary.opacity(0.25))
+                    .foregroundStyle(i <= stufe ? stufenFarbe : Color.secondary.opacity(0.22))
             }
         }
     }
@@ -133,11 +171,10 @@ struct SidebarZeile: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            FarbIcon(symbol: symbol, farbe: farbe)
+            FarbIcon(symbol: symbol, farbe: farbe, groesse: 26)
 
             Text(titel)
-                .font(.body)
-                .fontWeight(.medium)
+                .font(.system(.body, weight: .medium))
                 .lineLimit(1)
 
             Spacer()
@@ -148,6 +185,10 @@ struct SidebarZeile: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.secondary.opacity(0.12))
+                    .clipShape(Capsule())
             }
         }
         .padding(.vertical, 1)

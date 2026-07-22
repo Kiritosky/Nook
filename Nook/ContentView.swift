@@ -2,16 +2,17 @@
 //  ContentView.swift
 //  Nook
 //
-//  Created by Lasse Gröne on 20.07.26.
-//
 
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @Query private var alleSnippets: [Snippet]
+
     @State private var sidebarAuswahl: SidebarItem? = .alle
     @State private var selectedSnippet: Snippet?
     @State private var addSnippetAnzeigen = false
+    @State private var tagFilter: String? = nil
 
     var body: some View {
         NavigationSplitView {
@@ -20,21 +21,28 @@ struct ContentView: View {
             SnippetListView(
                 sidebarItem: sidebarAuswahl ?? .alle,
                 selectedSnippet: $selectedSnippet,
-                addSnippetAnzeigen: $addSnippetAnzeigen
+                addSnippetAnzeigen: $addSnippetAnzeigen,
+                tagFilter: $tagFilter
             )
         } detail: {
             if let snippet = selectedSnippet {
-                SnippetDetailView(snippet: snippet)
+                SnippetDetailView(snippet: snippet, tagFilter: $tagFilter)
             } else {
                 ContentUnavailableView(
                     "Kein Snippet ausgewählt",
-                    systemImage: "doc.text",
-                    description: Text("Wähle ein Snippet aus der Liste aus.")
+                    systemImage: "curlybraces",
+                    description: Text("Wähle ein Snippet aus der Liste oder erstelle ein neues mit ⌘N.")
                 )
             }
         }
         .sheet(isPresented: $addSnippetAnzeigen) {
             AddSnippetView()
+        }
+        .onChange(of: alleSnippets) { _, snippets in
+            SpotlightManager.indexAll(snippets)
+        }
+        .onAppear {
+            SpotlightManager.indexAll(alleSnippets)
         }
     }
 }

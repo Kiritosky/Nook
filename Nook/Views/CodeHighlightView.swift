@@ -42,7 +42,8 @@ struct CodeWebView: NSViewRepresentable {
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
-        webView.loadHTMLString(html(), baseURL: nil)
+        // Lokale Bundle-Ressourcen als Basis-URL → kein Netzwerk nötig
+        webView.loadHTMLString(html(), baseURL: Bundle.main.resourceURL)
     }
 
     class Coordinator: NSObject, WKNavigationDelegate {
@@ -65,13 +66,24 @@ struct CodeWebView: NSViewRepresentable {
             .replacingOccurrences(of: ">", with: "&gt;")
         let bg = theme.hintergrundHex
 
+        // Prüfen ob lokale Dateien vorhanden sind
+        let hatBundleJS  = Bundle.main.url(forResource: "highlight.min", withExtension: "js") != nil
+        let hatBundleCSS = Bundle.main.url(forResource: theme.bundleCSS, withExtension: nil) != nil
+
+        let jsTag  = hatBundleJS
+            ? "<script src=\"highlight.min.js\"></script>"
+            : "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js\"></script>"
+
+        let cssTag = hatBundleCSS
+            ? "<link rel=\"stylesheet\" href=\"\(theme.bundleCSS)\">"
+            : "<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/\(theme.cdnSlug).min.css\">"
+
         return """
         <!DOCTYPE html><html>
         <head>
         <meta charset="UTF-8">
-        <link rel="stylesheet"
-              href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/\(theme.cdnSlug).min.css">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+        \(cssTag)
+        \(jsTag)
         <style>
           * { margin:0; padding:0; box-sizing:border-box; }
           html,body { background:#\(bg); }

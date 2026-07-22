@@ -39,4 +39,16 @@ enum SyntaxTheme: String, CaseIterable, Identifiable {
     }
 
     var hintergrundFarbe: Color { Color(hex: hintergrundHex) }
+
+    // Lokaler Dateiname im App-Bundle (nach Download)
+    var bundleCSS: String {
+        switch self {
+        case .catppuccinMocha: return "hl-catppuccin-mocha.min.css"
+        case .nord:            return "hl-nord.min.css"
+        case .githubDark:      return "hl-github-dark.min.css"
+        case .oneDark:         return "hl-one-dark.min.css"
+        case .monokai:         return "hl-monokai.min.css"
+        case .tokyoNight:      return "hl-tokyo-night-dark.min.css"
+        }
+    }
 }
