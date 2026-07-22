@@ -15,11 +15,15 @@ enum SidebarItem: Hashable {
     case projekt(String)
     case tag(String)
     case thema(String)
+    case papierkorb
 }
 
 struct SidebarView: View {
     @Binding var auswahl: SidebarItem?
-    @Query private var alleSnippets: [Snippet]
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil })
+    private var alleSnippets: [Snippet]
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt != nil })
+    private var papierkorbSnippets: [Snippet]
     @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
 
@@ -36,6 +40,7 @@ struct SidebarView: View {
         case .projekt(let proj):       return alleSnippets.filter { $0.project == proj }.count
         case .tag(let tag):            return alleSnippets.filter { $0.tags.contains(tag) }.count
         case .thema(let thema):        return alleSnippets.filter { $0.topic == thema }.count
+        case .papierkorb:              return papierkorbSnippets.count
         }
     }
 
@@ -138,6 +143,15 @@ struct SidebarView: View {
                                 .tag(SidebarItem.thema(thema))
                         }
                     } header: { sectionHeader("Themen") }
+                }
+
+                // MARK: Papierkorb
+                if !papierkorbSnippets.isEmpty {
+                    Section {
+                        SidebarZeile(symbol: "trash.fill", farbe: .gray,
+                                     titel: "Papierkorb", anzahl: papierkorbSnippets.count)
+                            .tag(SidebarItem.papierkorb)
+                    }
                 }
             }
             .listStyle(.sidebar)

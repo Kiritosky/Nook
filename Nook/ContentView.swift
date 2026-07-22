@@ -10,7 +10,10 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
-    @Query private var alleSnippets: [Snippet]
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil })
+    private var alleSnippets: [Snippet]
+
+    @State private var papierkorb = PapierkorbManager()
 
     @State private var sidebarAuswahl: SidebarItem? = .alle
     @State private var selectedSnippet: Snippet?
@@ -58,6 +61,17 @@ struct ContentView: View {
                     .allowsHitTesting(false)
             }
         }
+        .overlay(alignment: .bottom) {
+            if let geloescht = papierkorb.zuletztGeloescht {
+                UndoLeiste(titel: geloescht.title) {
+                    papierkorb.rueckgaengig()
+                }
+                .padding(.bottom, 16)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: papierkorb.zuletztGeloescht)
+        .environment(papierkorb)
         // Datei-Drop → neues Snippet
         .onDrop(of: [.fileURL], isTargeted: $dropHighlight) { providers in
             verarbeiteDroppedFiles(providers)
@@ -76,6 +90,10 @@ struct ContentView: View {
         }
         .onChange(of: pendingClipboardCode) { _, new in
             if !new.isEmpty { addSnippetAnzeigen = true }
+        }
+        .onChange(of: papierkorb.zuletztGeloescht) { _, geloescht in
+            // Gerade gelöschtes Snippet aus der Detailauswahl entfernen
+            if let g = geloescht, selectedSnippet == g { selectedSnippet = nil }
         }
         .onChange(of: alleSnippets) { _, snippets in
             SpotlightManager.indexAll(snippets)
@@ -129,6 +147,40 @@ struct ContentView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Undo-Leiste (Rückgängig nach Löschen)
+
+private struct UndoLeiste: View {
+    let titel: String
+    let rueckgaengig: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "trash")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("In den Papierkorb verschoben")
+                    .font(.callout).fontWeight(.medium)
+                Text(titel.isEmpty ? "Ohne Titel" : titel)
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Divider().frame(height: 24)
+            Button(action: rueckgaengig) {
+                Label("Rückgängig", systemImage: "arrow.uturn.backward")
+                    .font(.callout).fontWeight(.semibold)
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(Color.accentColor)
+            .keyboardShortcut("z", modifiers: .command)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 11)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.08), lineWidth: 1))
+        .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
+        .fixedSize()
     }
 }
 

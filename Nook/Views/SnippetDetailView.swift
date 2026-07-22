@@ -37,13 +37,13 @@ struct FlexiWrap: Layout {
 
 struct SnippetDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(PapierkorbManager.self) private var papierkorb
     @Bindable var snippet: Snippet
     @Binding var tagFilter: String?
 
     @AppStorage("syntaxTheme") private var syntaxTheme: SyntaxTheme = .catppuccinMocha
 
     @State private var bearbeitenAnzeigen = false
-    @State private var loeschenBestaetigen = false
     @State private var kodeCopied = false
     @State private var markdownCopied = false
     @State private var shortcutsAnzeigen = false
@@ -133,23 +133,30 @@ struct SnippetDetailView: View {
                 }
                 .help("Als Markdown kopieren")
             }
-            ToolbarItem(placement: .destructiveAction) {
-                Button(role: .destructive) { loeschenBestaetigen = true } label: {
-                    Label("Löschen", systemImage: "trash")
+            if snippet.imPapierkorb {
+                ToolbarItem(placement: .primaryAction) {
+                    Button { papierkorb.wiederherstellen(snippet) } label: {
+                        Label("Wiederherstellen", systemImage: "arrow.uturn.backward")
+                    }
+                }
+                ToolbarItem(placement: .destructiveAction) {
+                    Button(role: .destructive) {
+                        papierkorb.endgueltigLoeschen(snippet, context: modelContext)
+                    } label: {
+                        Label("Endgültig löschen", systemImage: "trash")
+                    }
+                }
+            } else {
+                ToolbarItem(placement: .destructiveAction) {
+                    Button(role: .destructive) { papierkorb.loeschen(snippet) } label: {
+                        Label("Löschen", systemImage: "trash")
+                    }
+                    .help("In den Papierkorb (mit Rückgängig)")
                 }
             }
         }
         .sheet(isPresented: $bearbeitenAnzeigen) { EditSnippetView(snippet: snippet) }
         .sheet(isPresented: $shortcutsAnzeigen) { ShortcutsOverlay() }
-        .confirmationDialog("Snippet löschen?", isPresented: $loeschenBestaetigen, titleVisibility: .visible) {
-            Button("Löschen", role: .destructive) {
-                SpotlightManager.remove(snippet)
-                modelContext.delete(snippet)
-            }
-            Button("Abbrechen", role: .cancel) {}
-        } message: {
-            Text("\"\(snippet.title)\" wird unwiderruflich gelöscht.")
-        }
         .onAppear { snippet.lastAccessedAt = Date() }
         .onKeyPress(.init("?")) { shortcutsAnzeigen = true; return .handled }
     }

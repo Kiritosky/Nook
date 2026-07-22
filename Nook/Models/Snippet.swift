@@ -159,6 +159,11 @@ class Snippet {
     var languageOverride: String?
     var customHighlightName: String?
 
+    /// Soft-Delete: nil = aktiv, sonst Zeitpunkt der Papierkorb-Verschiebung.
+    var deletedAt: Date?
+
+    var imPapierkorb: Bool { deletedAt != nil }
+
     var effectiveLanguageName: String { languageOverride ?? language.rawValue }
 
     var effectiveHighlightName: String { customHighlightName ?? language.highlightName }
@@ -180,7 +185,8 @@ class Snippet {
         isFavorite: Bool = false,
         isPinned: Bool = false,
         languageOverride: String? = nil,
-        customHighlightName: String? = nil
+        customHighlightName: String? = nil,
+        deletedAt: Date? = nil
     ) {
         self.title = title
         self.code = code
@@ -198,5 +204,6 @@ class Snippet {
         self.copyCount = 0
         self.languageOverride = languageOverride
         self.customHighlightName = customHighlightName
+        self.deletedAt = deletedAt
     }
 }

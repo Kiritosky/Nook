@@ -19,6 +19,7 @@ struct SnippetCodeAbrufenIntent: AppIntent {
     @Parameter(title: "Snippet-Titel", description: "Titel oder Teil des Titels des Snippets")
     var snippetTitel: String
 
+    @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog {
         let snippets = try alleSnippets()
         let treffer = snippets.filter { $0.title.localizedCaseInsensitiveContains(snippetTitel) }
@@ -68,6 +69,7 @@ struct SnippetsAuflistenIntent: AppIntent {
         categoryName: "Nook"
     )
 
+    @MainActor
     func perform() async throws -> some IntentResult & ReturnsValue<[String]> & ProvidesDialog {
         let snippets = try alleSnippets()
         let titel = snippets.map { $0.title }

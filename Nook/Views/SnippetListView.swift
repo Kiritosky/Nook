@@ -33,7 +33,11 @@ enum Sortierung: String, CaseIterable {
 
 struct SnippetListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var alleSnippets: [Snippet]
+    @Environment(PapierkorbManager.self) private var papierkorb
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil })
+    private var alleSnippets: [Snippet]
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt != nil }, sort: \Snippet.deletedAt, order: .reverse)
+    private var papierkorbSnippets: [Snippet]
 
     let sidebarItem: SidebarItem
     @Binding var selectedSnippet: Snippet?
@@ -44,7 +48,12 @@ struct SnippetListView: View {
     @State private var schwierigkeitsFilter: Int? = nil
     @AppStorage("snippetSortierung") private var sortierung: Sortierung = .neueste
 
+    private var istPapierkorb: Bool { if case .papierkorb = sidebarItem { return true } else { return false } }
+
     private var basisSnippets: [Snippet] {
+        // Papierkorb: bereits nach Löschzeitpunkt sortiert, ohne Anheften-Logik
+        if case .papierkorb = sidebarItem { return papierkorbSnippets }
+
         let gefiltert: [Snippet]
         switch sidebarItem {
         case .alle:                    gefiltert = alleSnippets
@@ -55,6 +64,7 @@ struct SnippetListView: View {
         case .projekt(let proj):       gefiltert = alleSnippets.filter { $0.project == proj }
         case .tag(let tag):            gefiltert = alleSnippets.filter { $0.tags.contains(tag) }
         case .thema(let thema):        gefiltert = alleSnippets.filter { $0.topic == thema }
+        case .papierkorb:              gefiltert = papierkorbSnippets   // via Früh-Return oben abgedeckt
         }
 
         let sortiert: [Snippet]
@@ -113,7 +123,27 @@ struct SnippetListView: View {
             }
             .background(.bar)
 
-            Divider()
+            // Papierkorb-Kopfleiste
+            if istPapierkorb {
+                HStack(spacing: 8) {
+                    Image(systemName: "trash").font(.caption).foregroundStyle(.secondary)
+                    Text("Gelöschte Snippets kannst du wiederherstellen oder endgültig entfernen.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    if !papierkorbSnippets.isEmpty {
+                        Button(role: .destructive) {
+                            if let sel = selectedSnippet, sel.imPapierkorb { selectedSnippet = nil }
+                            papierkorb.papierkorbLeeren(papierkorbSnippets, context: modelContext)
+                        } label: {
+                            Text("Papierkorb leeren").font(.caption)
+                        }
+                        .buttonStyle(.plain).foregroundStyle(.red)
+                    }
+                }
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .background(.bar)
+                Divider()
+            }
 
             if gefilterteSnippets.isEmpty {
                 emptyState
@@ -124,24 +154,36 @@ struct SnippetListView: View {
                             SnippetKarte(snippet: snippet, istAusgewaehlt: selectedSnippet == snippet)
                                 .onTapGesture { selectedSnippet = snippet }
                                 .contextMenu {
-                                    Button { snippet.isPinned.toggle() } label: {
-                                        Label(snippet.isPinned ? "Losgelöst" : "Anheften",
-                                              systemImage: snippet.isPinned ? "pin.slash" : "pin")
-                                    }
-                                    Button { snippet.isFavorite.toggle() } label: {
-                                        Label(snippet.isFavorite ? "Aus Favoriten" : "Zu Favoriten",
-                                              systemImage: snippet.isFavorite ? "star.slash" : "star")
-                                    }
-                                    Button { duplizieren(snippet) } label: {
-                                        Label("Duplizieren", systemImage: "doc.on.doc")
-                                    }
-                                    Divider()
-                                    Button(role: .destructive) {
-                                        SpotlightManager.remove(snippet)
-                                        modelContext.delete(snippet)
-                                        if selectedSnippet == snippet { selectedSnippet = nil }
-                                    } label: {
-                                        Label("Löschen", systemImage: "trash")
+                                    if snippet.imPapierkorb {
+                                        Button { papierkorb.wiederherstellen(snippet) } label: {
+                                            Label("Wiederherstellen", systemImage: "arrow.uturn.backward")
+                                        }
+                                        Divider()
+                                        Button(role: .destructive) {
+                                            if selectedSnippet == snippet { selectedSnippet = nil }
+                                            papierkorb.endgueltigLoeschen(snippet, context: modelContext)
+                                        } label: {
+                                            Label("Endgültig löschen", systemImage: "trash")
+                                        }
+                                    } else {
+                                        Button { snippet.isPinned.toggle() } label: {
+                                            Label(snippet.isPinned ? "Losgelöst" : "Anheften",
+                                                  systemImage: snippet.isPinned ? "pin.slash" : "pin")
+                                        }
+                                        Button { snippet.isFavorite.toggle() } label: {
+                                            Label(snippet.isFavorite ? "Aus Favoriten" : "Zu Favoriten",
+                                                  systemImage: snippet.isFavorite ? "star.slash" : "star")
+                                        }
+                                        Button { duplizieren(snippet) } label: {
+                                            Label("Duplizieren", systemImage: "doc.on.doc")
+                                        }
+                                        Divider()
+                                        Button(role: .destructive) {
+                                            if selectedSnippet == snippet { selectedSnippet = nil }
+                                            papierkorb.loeschen(snippet)
+                                        } label: {
+                                            Label("Löschen", systemImage: "trash")
+                                        }
                                     }
                                 }
                         }
@@ -184,6 +226,7 @@ struct SnippetListView: View {
         case .projekt(let proj):       return proj
         case .tag(let tag):            return "#\(tag)"
         case .thema(let thema):        return thema
+        case .papierkorb:              return "Papierkorb"
         }
     }
 

@@ -12,7 +12,8 @@ enum MenuBarFilter: Equatable {
 }
 
 struct MenuBarView: View {
-    @Query(sort: \Snippet.createdAt, order: .reverse) private var snippets: [Snippet]
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil }, sort: \Snippet.createdAt, order: .reverse)
+    private var snippets: [Snippet]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettings

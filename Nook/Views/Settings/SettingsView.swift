@@ -6,11 +6,13 @@
 import SwiftUI
 import SwiftData
 import ServiceManagement
+import AppKit
+import UniformTypeIdentifiers
 
 // MARK: - Settings Container
 
 enum SettingsSektion: String, Hashable, CaseIterable {
-    case allgemein, erscheinungsbild, sprachen, projekte
+    case allgemein, erscheinungsbild, sprachen, projekte, daten
 
     var titel: String {
         switch self {
@@ -18,6 +20,7 @@ enum SettingsSektion: String, Hashable, CaseIterable {
         case .erscheinungsbild: return "Erscheinungsbild"
         case .sprachen:        return "Sprachen"
         case .projekte:        return "Projekte"
+        case .daten:           return "Daten"
         }
     }
 
@@ -27,6 +30,7 @@ enum SettingsSektion: String, Hashable, CaseIterable {
         case .erscheinungsbild: return "paintbrush.pointed.fill"
         case .sprachen:        return "chevron.left.forwardslash.chevron.right"
         case .projekte:        return "folder.fill"
+        case .daten:           return "externaldrive.fill.badge.timemachine"
         }
     }
 
@@ -36,6 +40,7 @@ enum SettingsSektion: String, Hashable, CaseIterable {
         case .erscheinungsbild: return .indigo
         case .sprachen:        return .teal
         case .projekte:        return .orange
+        case .daten:           return .green
         }
     }
 }
@@ -66,6 +71,7 @@ struct SettingsView: View {
                 case .erscheinungsbild: AppearanceSettingsView()
                 case .sprachen:        LanguageSettingsView()
                 case .projekte:        ProjektSettingsView()
+                case .daten:           DataSettingsView()
                 case nil:
                     ContentUnavailableView("Wähle eine Kategorie", systemImage: "gearshape")
                 }
@@ -589,5 +595,111 @@ struct ProjektSettingsView: View {
         neuName = ""
         neuSymbol = "folder.fill"
         neuColorHex = "5856D6"
+    }
+}
+
+// MARK: - Daten (Export / Import / Sicherung)
+
+struct DataSettingsView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil })
+    private var aktiveSnippets: [Snippet]
+    @Query private var alleSnippets: [Snippet]
+
+    @State private var status: StatusMeldung?
+
+    private struct StatusMeldung: Identifiable {
+        let id = UUID()
+        let text: String
+        let fehler: Bool
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                LabeledContent("Snippets") {
+                    Text("\(aktiveSnippets.count)").foregroundStyle(.secondary).monospacedDigit()
+                }
+                if let status {
+                    Label(status.text, systemImage: status.fehler ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(status.fehler ? .orange : .green)
+                }
+            } header: {
+                Label("Sammlung", systemImage: "square.stack.3d.up.fill")
+            }
+
+            Section {
+                Button {
+                    exportieren()
+                } label: {
+                    Label("Sammlung exportieren …", systemImage: "square.and.arrow.up")
+                }
+                .disabled(aktiveSnippets.isEmpty)
+            } header: {
+                Label("Export", systemImage: "arrow.up.doc")
+            } footer: {
+                Text("Speichert alle Snippets als lesbare JSON-Datei — deine Sicherung, jederzeit wieder importierbar.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
+                Button {
+                    importieren()
+                } label: {
+                    Label("Aus Datei importieren …", systemImage: "square.and.arrow.down")
+                }
+            } header: {
+                Label("Import", systemImage: "arrow.down.doc")
+            } footer: {
+                Text("Fügt Snippets aus einer Nook-Backup-Datei hinzu. Bereits vorhandene Snippets werden übersprungen.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("Daten")
+    }
+
+    // MARK: Aktionen
+
+    private func exportieren() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "Nook-Backup-\(datumsStempel()).json"
+        panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let data = try SnippetImportExport.exportieren(aktiveSnippets)
+            try data.write(to: url, options: .atomic)
+            status = .init(text: "\(aktiveSnippets.count) Snippets exportiert.", fehler: false)
+        } catch {
+            status = .init(text: "Export fehlgeschlagen: \(error.localizedDescription)", fehler: true)
+        }
+    }
+
+    private func importieren() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let data = try Data(contentsOf: url)
+            let ergebnis = try SnippetImportExport.importieren(data, context: modelContext, vorhandene: alleSnippets)
+            let teile = [
+                ergebnis.neu > 0 ? "\(ergebnis.neu) importiert" : nil,
+                ergebnis.uebersprungen > 0 ? "\(ergebnis.uebersprungen) übersprungen" : nil
+            ].compactMap { $0 }
+            status = .init(text: teile.isEmpty ? "Keine neuen Snippets." : teile.joined(separator: ", ") + ".", fehler: false)
+        } catch {
+            status = .init(text: "Import fehlgeschlagen — ist es eine gültige Nook-Backup-Datei?", fehler: true)
+        }
+    }
+
+    private func datumsStempel() -> String {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: Date())
     }
 }
