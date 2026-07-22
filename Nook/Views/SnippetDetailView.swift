@@ -6,6 +6,35 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Flex-Wrap für Tags
+
+struct FlexiWrap: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 0
+        var x: CGFloat = 0; var y: CGFloat = 0; var rowH: CGFloat = 0
+        for view in subviews {
+            let s = view.sizeThatFits(.unspecified)
+            if x + s.width > width && x > 0 { y += rowH + spacing; x = 0; rowH = 0 }
+            x += s.width + spacing; rowH = max(rowH, s.height)
+        }
+        return CGSize(width: width, height: y + rowH)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x = bounds.minX; var y = bounds.minY; var rowH: CGFloat = 0
+        for view in subviews {
+            let s = view.sizeThatFits(.unspecified)
+            if x + s.width > bounds.maxX && x > bounds.minX { y += rowH + spacing; x = bounds.minX; rowH = 0 }
+            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(s))
+            x += s.width + spacing; rowH = max(rowH, s.height)
+        }
+    }
+}
+
+// MARK: - SnippetDetailView
+
 struct SnippetDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var snippet: Snippet
@@ -25,19 +54,20 @@ struct SnippetDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 headerBereich
-                VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 24) {
                     codeBereich
 
                     if let text = snippet.descriptionText, !text.isEmpty {
                         infoSektion(titel: "Beschreibung") {
                             Text(text)
                                 .font(.body)
-                                .lineSpacing(5)
+                                .lineSpacing(4)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(14)
                                 .background(Color.primary.opacity(0.03))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.primary.opacity(0.06), lineWidth: 0.5))
+                                .overlay(RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.primary.opacity(0.06), lineWidth: 0.5))
                         }
                     }
 
@@ -54,11 +84,9 @@ struct SnippetDetailView: View {
 
                     if !snippet.tags.isEmpty {
                         infoSektion(titel: "Tags") {
-                            HStack(spacing: 6) {
+                            FlexiWrap(spacing: 6) {
                                 ForEach(snippet.tags, id: \.self) { tag in
-                                    Button {
-                                        tagFilter = tag
-                                    } label: {
+                                    Button { tagFilter = tag } label: {
                                         TagPill(text: "#\(tag)", farbe: .purple)
                                     }
                                     .buttonStyle(.plain)
@@ -68,22 +96,22 @@ struct SnippetDetailView: View {
                         }
                     }
 
-                    // Metadaten-Footer
-                    HStack(spacing: 16) {
-                        Label(snippet.createdAt.formatted(date: .long, time: .omitted),
+                    HStack(spacing: 12) {
+                        Label(snippet.createdAt.formatted(date: .abbreviated, time: .omitted),
                               systemImage: "calendar")
                         if let last = snippet.lastAccessedAt {
-                            Label("Zuletzt: \(last.formatted(.relative(presentation: .named)))",
+                            Label(last.formatted(.relative(presentation: .named)),
                                   systemImage: "eye")
                         }
-                        if let projekt = snippet.project, !projekt.isEmpty {
-                            Label(projekt, systemImage: "folder")
+                        if let p = snippet.project, !p.isEmpty {
+                            Label(p, systemImage: "folder")
                         }
                     }
                     .font(.caption)
                     .foregroundStyle(.quaternary)
+                    .lineLimit(1)
                 }
-                .padding(28)
+                .padding(24)
             }
         }
         .toolbar {
@@ -93,27 +121,21 @@ struct SnippetDetailView: View {
                 }
                 .keyboardShortcut("e", modifiers: .command)
             }
-
             ToolbarItem(placement: .primaryAction) {
                 Button { alsMarkdownKopieren() } label: {
                     Label(markdownCopied ? "Kopiert!" : "Markdown",
                           systemImage: markdownCopied ? "checkmark" : "doc.richtext")
                 }
-                .help("Als Markdown in die Zwischenablage kopieren")
+                .help("Als Markdown kopieren")
             }
-
             ToolbarItem(placement: .destructiveAction) {
                 Button(role: .destructive) { loeschenBestaetigen = true } label: {
                     Label("Löschen", systemImage: "trash")
                 }
             }
         }
-        .sheet(isPresented: $bearbeitenAnzeigen) {
-            EditSnippetView(snippet: snippet)
-        }
-        .sheet(isPresented: $shortcutsAnzeigen) {
-            ShortcutsOverlay()
-        }
+        .sheet(isPresented: $bearbeitenAnzeigen) { EditSnippetView(snippet: snippet) }
+        .sheet(isPresented: $shortcutsAnzeigen) { ShortcutsOverlay() }
         .confirmationDialog("Snippet löschen?", isPresented: $loeschenBestaetigen, titleVisibility: .visible) {
             Button("Löschen", role: .destructive) {
                 SpotlightManager.remove(snippet)
@@ -123,84 +145,68 @@ struct SnippetDetailView: View {
         } message: {
             Text("\"\(snippet.title)\" wird unwiderruflich gelöscht.")
         }
-        .onAppear {
-            snippet.lastAccessedAt = Date()
-        }
-        .onKeyPress(.init("?")) {
-            shortcutsAnzeigen = true
-            return .handled
-        }
+        .onAppear { snippet.lastAccessedAt = Date() }
+        .onKeyPress(.init("?")) { shortcutsAnzeigen = true; return .handled }
     }
 
     // MARK: - Header
 
     private var headerBereich: some View {
         ZStack(alignment: .bottomLeading) {
-            // Mehrschichtiger Gradient für Tiefe
             LinearGradient(
                 stops: [
-                    .init(color: snippet.akzentFarbe.opacity(0.28), location: 0),
-                    .init(color: snippet.akzentFarbe.opacity(0.12), location: 0.5),
-                    .init(color: snippet.akzentFarbe.opacity(0.02), location: 1)
+                    .init(color: snippet.akzentFarbe.opacity(0.2), location: 0),
+                    .init(color: snippet.akzentFarbe.opacity(0.06), location: 0.65),
+                    .init(color: .clear, location: 1)
                 ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                startPoint: .topLeading, endPoint: .bottomTrailing
             )
 
-            // Großes dekoratives Symbol
             Image(systemName: snippet.language.symbolName)
-                .font(.system(size: 140, weight: .black))
-                .foregroundStyle(snippet.akzentFarbe.opacity(0.06))
+                .font(.system(size: 90, weight: .black))
+                .foregroundStyle(snippet.akzentFarbe.opacity(0.05))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .padding(.top, 16)
-                .padding(.trailing, 20)
+                .padding(.top, 12).padding(.trailing, 16)
+                .allowsHitTesting(false)
 
-            VStack(alignment: .leading, spacing: 14) {
-                // Aktions-Leiste oben
-                HStack(spacing: 10) {
-                    // Sprach-Badge
-                    HStack(spacing: 6) {
-                        FarbIcon(symbol: snippet.language.symbolName, farbe: snippet.akzentFarbe, groesse: 20)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    HStack(spacing: 5) {
+                        FarbIcon(symbol: snippet.language.symbolName,
+                                 farbe: snippet.akzentFarbe, groesse: 18)
                         Text(snippet.effectiveLanguageName)
-                            .font(.caption)
-                            .fontWeight(.semibold)
+                            .font(.caption).fontWeight(.semibold)
                             .foregroundStyle(snippet.akzentFarbe)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(snippet.akzentFarbe.opacity(0.13))
+                    .padding(.horizontal, 9).padding(.vertical, 4)
+                    .background(snippet.akzentFarbe.opacity(0.12))
                     .clipShape(Capsule())
-                    .overlay(Capsule().stroke(snippet.akzentFarbe.opacity(0.2), lineWidth: 0.5))
 
-                    Spacer()
+                    Spacer(minLength: 0)
 
-                    // Pin
-                    headerButton(
-                        symbol: snippet.isPinned ? "pin.fill" : "pin",
-                        farbe: snippet.isPinned ? .orange : .secondary.opacity(0.5),
-                        rotation: snippet.isPinned ? 45 : 0,
-                        help: snippet.isPinned ? "Losgelöst" : "Anheften"
-                    ) { snippet.isPinned.toggle() }
-
-                    // Favorit
-                    headerButton(
-                        symbol: snippet.isFavorite ? "star.fill" : "star",
-                        farbe: snippet.isFavorite ? .yellow : .secondary.opacity(0.5),
-                        help: snippet.isFavorite ? "Aus Favoriten" : "Favorit"
-                    ) { snippet.isFavorite.toggle() }
+                    headerButton(symbol: snippet.isPinned ? "pin.fill" : "pin",
+                                 farbe: snippet.isPinned ? .orange : .secondary.opacity(0.4),
+                                 rotation: snippet.isPinned ? 45 : 0,
+                                 help: snippet.isPinned ? "Losgelöst" : "Anheften") {
+                        snippet.isPinned.toggle()
+                    }
+                    headerButton(symbol: snippet.isFavorite ? "star.fill" : "star",
+                                 farbe: snippet.isFavorite ? .yellow : .secondary.opacity(0.4),
+                                 help: snippet.isFavorite ? "Aus Favoriten" : "Favorit") {
+                        snippet.isFavorite.toggle()
+                    }
                 }
 
-                // Titel
                 Text(snippet.title)
-                    .font(.system(size: 28, weight: .bold, design: .default))
+                    .font(.system(size: 24, weight: .bold))
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
+                    .minimumScaleFactor(0.85)
 
-                // Metadaten-Chips
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     if snippet.difficulty >= 1 && snippet.difficulty <= 3 {
                         metaChip {
-                            HStack(spacing: 4) {
+                            HStack(spacing: 3) {
                                 SchwierigkeitSterne(stufe: snippet.difficulty)
                                 Text(schwierigkeitLabels[snippet.difficulty])
                                     .font(.caption2).fontWeight(.medium)
@@ -209,39 +215,32 @@ struct SnippetDetailView: View {
                     }
                     if !snippet.topic.isEmpty {
                         metaChip {
-                            Label(snippet.topic, systemImage: "tag")
-                                .font(.caption2)
+                            Label(snippet.topic, systemImage: "tag").font(.caption2).lineLimit(1)
                         }
                     }
                     if let proj = snippet.project, !proj.isEmpty {
                         metaChip {
-                            Label(proj, systemImage: "folder")
-                                .font(.caption2)
+                            Label(proj, systemImage: "folder").font(.caption2).lineLimit(1)
                         }
                     }
                 }
                 .foregroundStyle(.secondary)
             }
-            .padding(24)
+            .padding(20)
         }
         .frame(maxWidth: .infinity)
     }
 
     @ViewBuilder
-    private func headerButton(
-        symbol: String,
-        farbe: Color,
-        rotation: Double = 0,
-        help: String,
-        aktion: @escaping () -> Void
-    ) -> some View {
+    private func headerButton(symbol: String, farbe: Color, rotation: Double = 0,
+                              help: String, aktion: @escaping () -> Void) -> some View {
         Button(action: aktion) {
             Image(systemName: symbol)
-                .font(.title3)
+                .font(.callout)
                 .foregroundStyle(farbe)
                 .rotationEffect(.degrees(rotation))
                 .symbolEffect(.bounce, value: symbol)
-                .frame(width: 32, height: 32)
+                .frame(width: 28, height: 28)
                 .background(Color.primary.opacity(0.06))
                 .clipShape(Circle())
         }
@@ -252,19 +251,16 @@ struct SnippetDetailView: View {
     @ViewBuilder
     private func metaChip<C: View>(@ViewBuilder inhalt: () -> C) -> some View {
         inhalt()
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 7).padding(.vertical, 3)
             .background(Color.primary.opacity(0.06))
             .clipShape(Capsule())
     }
 
-    // MARK: - Code (Terminal-Stil)
+    // MARK: - Code-Block
 
     private var codeBereich: some View {
         VStack(spacing: 0) {
-            // Terminal-Header
             HStack(spacing: 0) {
-                // Mac-Dots (dekorativ)
                 HStack(spacing: 5) {
                     Circle().fill(Color(hex: "FF5F57")).frame(width: 9, height: 9)
                     Circle().fill(Color(hex: "FFBD2E")).frame(width: 9, height: 9)
@@ -274,18 +270,16 @@ struct SnippetDetailView: View {
 
                 Spacer()
 
-                // Sprache + Icon
                 HStack(spacing: 5) {
-                    FarbIcon(symbol: snippet.language.symbolName, farbe: snippet.akzentFarbe, groesse: 14)
+                    FarbIcon(symbol: snippet.language.symbolName,
+                             farbe: snippet.akzentFarbe, groesse: 14)
                     Text(snippet.effectiveLanguageName)
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white.opacity(0.45))
+                        .font(.caption).fontWeight(.medium)
+                        .foregroundStyle(.white.opacity(0.4))
                 }
 
                 Spacer()
 
-                // Zeilen-Anzahl + Kopieren
                 HStack(spacing: 10) {
                     Text("\(snippet.code.components(separatedBy: "\n").count) Z.")
                         .font(.caption2)
@@ -297,8 +291,7 @@ struct SnippetDetailView: View {
                             Image(systemName: kodeCopied ? "checkmark" : "doc.on.doc")
                             Text(kodeCopied ? "Kopiert" : "Kopieren")
                         }
-                        .font(.caption)
-                        .fontWeight(.medium)
+                        .font(.caption).fontWeight(.medium)
                         .foregroundStyle(kodeCopied ? .green : .white.opacity(0.45))
                         .animation(.easeInOut(duration: 0.2), value: kodeCopied)
                     }
@@ -310,73 +303,46 @@ struct SnippetDetailView: View {
             .padding(.vertical, 10)
             .background {
                 syntaxTheme.hintergrundFarbe
-                Color.black.opacity(0.25)
+                Color.black.opacity(0.2)
             }
             .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(Color.white.opacity(0.07))
-                    .frame(height: 1)
+                Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1)
             }
 
-            // Code-Inhalt
             CodeHighlightView(code: snippet.code, highlightName: snippet.effectiveHighlightName)
         }
         .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.white.opacity(0.07), lineWidth: 0.5)
-        )
+        .overlay(RoundedRectangle(cornerRadius: 10)
+            .stroke(Color.white.opacity(0.08), lineWidth: 0.5))
     }
-
-    // MARK: - Sektion-Wrapper
 
     @ViewBuilder
     private func infoSektion<C: View>(titel: String, @ViewBuilder inhalt: () -> C) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             SectionHeader(titel: titel)
             inhalt()
         }
     }
 
-    // MARK: - Aktionen
-
     private func kopieren() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(snippet.code, forType: .string)
         kodeCopied = true
-        Task {
-            try? await Task.sleep(for: .seconds(1.5))
-            kodeCopied = false
-        }
+        Task { try? await Task.sleep(for: .seconds(1.5)); kodeCopied = false }
     }
 
     private func alsMarkdownKopieren() {
         var md = "## \(snippet.title)\n"
-
         let meta = [snippet.effectiveLanguageName, snippet.topic].filter { !$0.isEmpty }.joined(separator: " · ")
         if !meta.isEmpty { md += "> \(meta)\n" }
-
         md += "\n```\(snippet.effectiveHighlightName)\n\(snippet.code)\n```\n"
-
-        if let desc = snippet.descriptionText, !desc.isEmpty {
-            md += "\n\(desc)\n"
-        }
-
-        if let out = snippet.output, !out.isEmpty {
-            md += "\n**Output:**\n```\n\(out)\n```\n"
-        }
-
-        if !snippet.tags.isEmpty {
-            md += "\n*Tags: \(snippet.tags.map { "#\($0)" }.joined(separator: ", "))*\n"
-        }
-
+        if let desc = snippet.descriptionText, !desc.isEmpty { md += "\n\(desc)\n" }
+        if let out = snippet.output, !out.isEmpty { md += "\n**Output:**\n```\n\(out)\n```\n" }
+        if !snippet.tags.isEmpty { md += "\n*Tags: \(snippet.tags.map { "#\($0)" }.joined(separator: ", "))*\n" }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(md, forType: .string)
         markdownCopied = true
-        Task {
-            try? await Task.sleep(for: .seconds(1.5))
-            markdownCopied = false
-        }
+        Task { try? await Task.sleep(for: .seconds(1.5)); markdownCopied = false }
     }
 }
 
@@ -384,56 +350,40 @@ struct SnippetDetailView: View {
 
 struct ShortcutsOverlay: View {
     @Environment(\.dismiss) private var dismiss
-
     private let shortcuts: [(String, String)] = [
-        ("⌘N", "Neues Snippet"),
-        ("⌘E", "Snippet bearbeiten"),
-        ("⇧⌘C", "Code kopieren"),
-        ("⌘,", "Einstellungen öffnen"),
-        ("?", "Diese Übersicht"),
+        ("⌘N", "Neues Snippet"), ("⌘E", "Snippet bearbeiten"),
+        ("⇧⌘C", "Code kopieren"), ("⌘,", "Einstellungen"), ("?", "Diese Übersicht"),
     ]
 
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Tastaturkürzel")
-                    .font(.headline)
+                Text("Tastaturkürzel").font(.headline)
                 Spacer()
                 Button { dismiss() } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                }.buttonStyle(.plain)
             }
             .padding(20)
-
             Divider()
-
             VStack(spacing: 0) {
-                ForEach(shortcuts, id: \.0) { kuerzel, beschreibung in
+                ForEach(shortcuts, id: \.0) { k, b in
                     HStack {
-                        Text(beschreibung)
-                            .font(.callout)
+                        Text(b).font(.callout)
                         Spacer()
-                        Text(kuerzel)
+                        Text(k)
                             .font(.system(.callout, design: .monospaced))
-                            .fontWeight(.medium)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
+                            .fontWeight(.medium).foregroundStyle(.secondary)
+                            .padding(.horizontal, 8).padding(.vertical, 3)
                             .background(Color.primary.opacity(0.06))
                             .clipShape(RoundedRectangle(cornerRadius: 5))
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-
-                    if kuerzel != shortcuts.last?.0 {
-                        Divider().padding(.leading, 20)
-                    }
+                    .padding(.horizontal, 20).padding(.vertical, 10)
+                    if k != shortcuts.last?.0 { Divider().padding(.leading, 20) }
                 }
             }
         }
-        .frame(width: 340)
+        .frame(width: 320)
         .fixedSize(horizontal: false, vertical: true)
     }
 }

@@ -56,19 +56,12 @@ struct SnippetListView: View {
 
         let sortiert: [Snippet]
         switch sortierung {
-        case .neueste:
-            sortiert = gefiltert.sorted { $0.createdAt > $1.createdAt }
-        case .aelteste:
-            sortiert = gefiltert.sorted { $0.createdAt < $1.createdAt }
-        case .titel:
-            sortiert = gefiltert.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
-        case .zuleztGeoeffnet:
-            sortiert = gefiltert.sorted {
-                ($0.lastAccessedAt ?? $0.createdAt) > ($1.lastAccessedAt ?? $1.createdAt)
-            }
+        case .neueste:         sortiert = gefiltert.sorted { $0.createdAt > $1.createdAt }
+        case .aelteste:        sortiert = gefiltert.sorted { $0.createdAt < $1.createdAt }
+        case .titel:           sortiert = gefiltert.sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+        case .zuleztGeoeffnet: sortiert = gefiltert.sorted { ($0.lastAccessedAt ?? $0.createdAt) > ($1.lastAccessedAt ?? $1.createdAt) }
         }
 
-        // Gepinnte immer ganz oben
         return sortiert.sorted { $0.isPinned && !$1.isPinned }
     }
 
@@ -88,86 +81,56 @@ struct SnippetListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Aktiver Tag-Filter Banner
+            // Tag-Filter Banner
             if let tag = tagFilter {
                 HStack(spacing: 6) {
-                    Image(systemName: "tag.fill")
-                        .font(.caption2)
-                        .foregroundStyle(.purple)
-                    Text("#\(tag)")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.purple)
+                    Image(systemName: "tag.fill").font(.caption2).foregroundStyle(.purple)
+                    Text("#\(tag)").font(.caption).fontWeight(.semibold).foregroundStyle(.purple)
                     Spacer()
                     Button { tagFilter = nil } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
-                    }
-                    .buttonStyle(.plain)
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary).font(.caption)
+                    }.buttonStyle(.plain)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
+                .padding(.horizontal, 12).padding(.vertical, 7)
                 .background(Color.purple.opacity(0.08))
-
                 Divider()
             }
 
-            // Schwierigkeits-Filter-Chips
+            // Filter-Chips
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    FilterChip(label: "Alle", symbol: "square.grid.2x2", aktiv: schwierigkeitsFilter == nil) {
-                        schwierigkeitsFilter = nil
-                    }
-                    FilterChip(label: "Anfänger", symbol: "circle.fill", aktiv: schwierigkeitsFilter == 1) {
-                        schwierigkeitsFilter = schwierigkeitsFilter == 1 ? nil : 1
-                    }
-                    FilterChip(label: "Mittel", symbol: "circle.lefthalf.filled", aktiv: schwierigkeitsFilter == 2) {
-                        schwierigkeitsFilter = schwierigkeitsFilter == 2 ? nil : 2
-                    }
-                    FilterChip(label: "Fortgeschritten", symbol: "record.circle", aktiv: schwierigkeitsFilter == 3) {
-                        schwierigkeitsFilter = schwierigkeitsFilter == 3 ? nil : 3
-                    }
+                    FilterChip(label: "Alle",          symbol: "square.grid.2x2",      aktiv: schwierigkeitsFilter == nil) { schwierigkeitsFilter = nil }
+                    FilterChip(label: "Anfänger",      symbol: "circle.fill",           aktiv: schwierigkeitsFilter == 1)   { schwierigkeitsFilter = schwierigkeitsFilter == 1 ? nil : 1 }
+                    FilterChip(label: "Mittel",        symbol: "circle.lefthalf.filled", aktiv: schwierigkeitsFilter == 2)  { schwierigkeitsFilter = schwierigkeitsFilter == 2 ? nil : 2 }
+                    FilterChip(label: "Fortgeschritten", symbol: "record.circle",       aktiv: schwierigkeitsFilter == 3)   { schwierigkeitsFilter = schwierigkeitsFilter == 3 ? nil : 3 }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
+                .padding(.horizontal, 12).padding(.vertical, 7)
             }
             .background(.bar)
 
             Divider()
 
-            // Snippet-Liste
             if gefilterteSnippets.isEmpty {
                 emptyState
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 7) {
+                    LazyVStack(spacing: 6) {
                         ForEach(gefilterteSnippets) { snippet in
                             SnippetKarte(snippet: snippet, istAusgewaehlt: selectedSnippet == snippet)
                                 .onTapGesture { selectedSnippet = snippet }
                                 .contextMenu {
-                                    Button {
-                                        snippet.isPinned.toggle()
-                                    } label: {
+                                    Button { snippet.isPinned.toggle() } label: {
                                         Label(snippet.isPinned ? "Losgelöst" : "Anheften",
                                               systemImage: snippet.isPinned ? "pin.slash" : "pin")
                                     }
-
-                                    Button {
-                                        snippet.isFavorite.toggle()
-                                    } label: {
-                                        Label(snippet.isFavorite ? "Aus Favoriten entfernen" : "Zu Favoriten",
+                                    Button { snippet.isFavorite.toggle() } label: {
+                                        Label(snippet.isFavorite ? "Aus Favoriten" : "Zu Favoriten",
                                               systemImage: snippet.isFavorite ? "star.slash" : "star")
                                     }
-
-                                    Button {
-                                        duplizieren(snippet)
-                                    } label: {
+                                    Button { duplizieren(snippet) } label: {
                                         Label("Duplizieren", systemImage: "doc.on.doc")
                                     }
-
                                     Divider()
-
                                     Button(role: .destructive) {
                                         SpotlightManager.remove(snippet)
                                         modelContext.delete(snippet)
@@ -178,14 +141,13 @@ struct SnippetListView: View {
                                 }
                         }
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 10)
+                    .padding(.horizontal, 10).padding(.vertical, 10)
                 }
             }
         }
         .searchable(text: $suchtext, prompt: "Suchen...")
         .navigationTitle(titelFuerAuswahl)
-        .navigationSplitViewColumnWidth(min: 270, ideal: 310)
+        .navigationSplitViewColumnWidth(min: 260, ideal: 300)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { addSnippetAnzeigen = true } label: {
@@ -218,50 +180,35 @@ struct SnippetListView: View {
     }
 
     private var emptyState: some View {
-        let istLeer = alleSnippets.isEmpty
+        let istLeer     = alleSnippets.isEmpty
         let istTagFilter = tagFilter != nil
-        let istSuche = !suchtext.isEmpty
+        let istSuche    = !suchtext.isEmpty
 
         return VStack(spacing: 20) {
             ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.08))
-                    .frame(width: 72, height: 72)
+                Circle().fill(Color.accentColor.opacity(0.08)).frame(width: 68, height: 68)
                 Image(systemName: istTagFilter ? "tag.slash" : istSuche ? "magnifyingglass" : "curlybraces")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.system(size: 26, weight: .light))
                     .foregroundStyle(Color.accentColor.opacity(0.6))
                     .symbolEffect(.pulse, isActive: istSuche)
             }
-
-            VStack(spacing: 6) {
+            VStack(spacing: 5) {
                 Text(istTagFilter ? "Kein Snippet mit diesem Tag"
-                     : istSuche ? "Keine Treffer"
-                     : "Noch keine Snippets")
+                     : istSuche ? "Keine Treffer" : "Noch keine Snippets")
                     .font(.headline)
-
                 Text(istTagFilter ? "Tag-Filter aufheben um alle zu sehen."
                      : istSuche ? "Versuche einen anderen Begriff."
                      : "Erstelle dein erstes Snippet und leg los.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                    .font(.callout).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-
             if istLeer && !istSuche && !istTagFilter {
-                Button {
-                    addSnippetAnzeigen = true
-                } label: {
+                Button { addSnippetAnzeigen = true } label: {
                     Label("Erstes Snippet erstellen", systemImage: "plus")
-                        .font(.callout)
-                        .fontWeight(.medium)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                        .font(.callout).fontWeight(.medium)
+                }.buttonStyle(.borderedProminent).controlSize(.large)
             } else if istTagFilter {
-                Button("Filter aufheben") {
-                    tagFilter = nil
-                }
-                .buttonStyle(.bordered)
+                Button("Filter aufheben") { tagFilter = nil }.buttonStyle(.bordered)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -271,14 +218,10 @@ struct SnippetListView: View {
     private func duplizieren(_ original: Snippet) {
         let kopie = Snippet(
             title: "\(original.title) (Kopie)",
-            code: original.code,
-            language: original.language,
-            topic: original.topic,
-            project: original.project,
-            difficulty: original.difficulty,
-            tags: original.tags,
-            descriptionText: original.descriptionText,
-            output: original.output,
+            code: original.code, language: original.language,
+            topic: original.topic, project: original.project,
+            difficulty: original.difficulty, tags: original.tags,
+            descriptionText: original.descriptionText, output: original.output,
             languageOverride: original.languageOverride,
             customHighlightName: original.customHighlightName
         )
@@ -296,7 +239,7 @@ struct SnippetKarte: View {
 
     @AppStorage("showCodePreview") private var showCodePreview: Bool = true
     @State private var istKopiert = false
-    @State private var isHovered = false
+    @State private var isHovered  = false
 
     private var codeVorschau: String {
         snippet.code
@@ -316,22 +259,19 @@ struct SnippetKarte: View {
             // Akzentbalken
             LinearGradient(
                 colors: [snippet.akzentFarbe, snippet.akzentFarbe.opacity(0.3)],
-                startPoint: .top,
-                endPoint: .bottom
+                startPoint: .top, endPoint: .bottom
             )
-            .frame(width: 4)
+            .frame(width: 3)
 
-            // Karteninhalt
-            VStack(alignment: .leading, spacing: 7) {
-                // Header: Icon + Titel + Badges rechts
-                HStack(alignment: .center, spacing: 9) {
-                    FarbIcon(
-                        symbol: snippet.language.symbolName,
-                        farbe: snippet.akzentFarbe,
-                        groesse: 28
-                    )
+            VStack(alignment: .leading, spacing: 6) {
+                // Header
+                HStack(alignment: .top, spacing: 9) {
+                    FarbIcon(symbol: snippet.language.symbolName,
+                             farbe: snippet.akzentFarbe, groesse: 26)
+                        .padding(.top, 1)
 
-                    VStack(alignment: .leading, spacing: 1) {
+                    // Titel + Untertitel
+                    VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 4) {
                             if snippet.isPinned {
                                 Image(systemName: "pin.fill")
@@ -342,32 +282,29 @@ struct SnippetKarte: View {
                             Text(snippet.title)
                                 .font(.system(.subheadline, weight: .semibold))
                                 .lineLimit(1)
+                                .truncationMode(.tail)
                         }
-
-                        HStack(spacing: 4) {
+                        HStack(spacing: 3) {
                             Text(snippet.effectiveLanguageName)
-                                .font(.caption2)
-                                .fontWeight(.medium)
+                                .font(.caption2).fontWeight(.medium)
                                 .foregroundStyle(snippet.akzentFarbe)
                             if !snippet.topic.isEmpty {
                                 Text("·").foregroundStyle(.quaternary).font(.caption2)
                                 Text(snippet.topic)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
+                                    .font(.caption2).foregroundStyle(.secondary)
+                                    .lineLimit(1).truncationMode(.tail)
                             }
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
 
-                    Spacer(minLength: 4)
-
-                    // Rechts: Stern + Schwierigkeit + Datum
+                    // Rechts: Stern + Sterne + Datum (fixiert)
                     VStack(alignment: .trailing, spacing: 3) {
-                        HStack(spacing: 5) {
+                        HStack(spacing: 4) {
                             if snippet.isFavorite {
                                 Image(systemName: "star.fill")
-                                    .font(.system(size: 9))
-                                    .foregroundStyle(.yellow)
+                                    .font(.system(size: 9)).foregroundStyle(.yellow)
                             }
                             SchwierigkeitSterne(stufe: snippet.difficulty)
                         }
@@ -375,25 +312,25 @@ struct SnippetKarte: View {
                             .font(.system(size: 9))
                             .foregroundStyle(.quaternary)
                             .monospacedDigit()
+                            .lineLimit(1)
                     }
+                    .fixedSize(horizontal: true, vertical: false)
                 }
 
-                // Tags-Zeile
+                // Tags
                 if !snippet.tags.isEmpty {
                     HStack(spacing: 4) {
                         ForEach(snippet.tags.prefix(3), id: \.self) { tag in
                             Text("#\(tag)")
                                 .font(.system(size: 9))
                                 .foregroundStyle(.purple.opacity(0.9))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
+                                .padding(.horizontal, 6).padding(.vertical, 2)
                                 .background(Color.purple.opacity(0.1))
                                 .clipShape(Capsule())
                         }
                         if snippet.tags.count > 3 {
                             Text("+\(snippet.tags.count - 3)")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.tertiary)
+                                .font(.system(size: 9)).foregroundStyle(.tertiary)
                         }
                     }
                 }
@@ -402,69 +339,60 @@ struct SnippetKarte: View {
                 if showCodePreview && !codeVorschau.isEmpty {
                     Text(codeVorschau)
                         .font(.system(size: 10.5, design: .monospaced))
-                        .foregroundStyle(.secondary.opacity(0.9))
+                        .foregroundStyle(.secondary.opacity(0.85))
                         .lineLimit(2)
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 6)
+                        .truncationMode(.tail)
+                        .padding(.horizontal, 9).padding(.vertical, 6)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.primary.opacity(0.04))
                         .clipShape(RoundedRectangle(cornerRadius: 5))
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 11).padding(.vertical, 10)
         }
         .background(
-            RoundedRectangle(cornerRadius: 11)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(istAusgewaehlt
                       ? snippet.akzentFarbe.opacity(0.1)
                       : Color(nsColor: .controlBackgroundColor))
         )
-        .clipShape(RoundedRectangle(cornerRadius: 11))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 11)
+            RoundedRectangle(cornerRadius: 10)
                 .stroke(
                     istAusgewaehlt ? snippet.akzentFarbe.opacity(0.4) : Color.primary.opacity(0.07),
-                    lineWidth: istAusgewaehlt ? 1.5 : 1
+                    lineWidth: istAusgewaehlt ? 1.5 : 0.5
                 )
         )
         .shadow(
-            color: istAusgewaehlt
-                ? snippet.akzentFarbe.opacity(0.22)
-                : isHovered ? Color.black.opacity(0.08) : Color.black.opacity(0.04),
-            radius: istAusgewaehlt ? 10 : isHovered ? 5 : 2,
-            x: 0,
-            y: istAusgewaehlt ? 4 : isHovered ? 2 : 1
+            color: istAusgewaehlt ? snippet.akzentFarbe.opacity(0.18)
+                                  : isHovered ? Color.black.opacity(0.07) : Color.black.opacity(0.03),
+            radius: istAusgewaehlt ? 8 : isHovered ? 4 : 1,
+            x: 0, y: istAusgewaehlt ? 3 : 1
         )
-        // Hover-Kopieren
         .overlay(alignment: .topTrailing) {
             if isHovered || istKopiert {
                 Button { kopieren() } label: {
                     Image(systemName: istKopiert ? "checkmark" : "doc.on.doc")
-                        .font(.caption2)
-                        .fontWeight(.semibold)
+                        .font(.caption2).fontWeight(.semibold)
                         .foregroundStyle(istKopiert ? .green : .secondary)
                         .padding(6)
                         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                 }
-                .buttonStyle(.plain)
-                .padding(7)
-                .transition(.opacity.combined(with: .scale(0.82, anchor: .topTrailing)))
+                .buttonStyle(.plain).padding(7)
+                .transition(.opacity.combined(with: .scale(0.85, anchor: .topTrailing)))
             }
         }
-        .scaleEffect(isHovered && !istAusgewaehlt ? 1.004 : 1.0)
+        .scaleEffect(isHovered && !istAusgewaehlt ? 1.003 : 1.0)
         .onHover { isHovered = $0 }
-        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
-        .animation(.easeInOut(duration: 0.18), value: istAusgewaehlt)
+        .animation(.spring(response: 0.22, dampingFraction: 0.8), value: isHovered)
+        .animation(.easeInOut(duration: 0.15), value: istAusgewaehlt)
     }
 
     private func kopieren() {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(snippet.code, forType: .string)
         istKopiert = true
-        Task {
-            try? await Task.sleep(for: .seconds(1.5))
-            istKopiert = false
-        }
+        Task { try? await Task.sleep(for: .seconds(1.5)); istKopiert = false }
     }
 }
