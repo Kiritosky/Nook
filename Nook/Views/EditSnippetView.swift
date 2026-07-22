@@ -12,8 +12,6 @@ struct EditSnippetView: View {
     @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
 
-    @AppStorage("syntaxTheme") private var syntaxTheme: SyntaxTheme = .catppuccinMocha
-
     @State private var titel: String
     @State private var code: String
     @State private var spracheName: String
@@ -23,7 +21,6 @@ struct EditSnippetView: View {
     @State private var beschreibung: String
     @State private var outputText: String
     @State private var tagsText: String
-    @State private var editorModus: EditorModus = .editor
 
     init(snippet: Snippet) {
         self.snippet = snippet
@@ -230,23 +227,11 @@ struct EditSnippetView: View {
 
     private var rechterCodeEditor: some View {
         VStack(spacing: 0) {
-            // Header mit Editor/Vorschau-Toggle
             HStack(spacing: 8) {
                 Image(systemName: "chevron.left.forwardslash.chevron.right")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("Code").font(.caption).fontWeight(.semibold).foregroundStyle(.secondary)
-
                 Spacer()
-
-                Picker("", selection: $editorModus) {
-                    ForEach(EditorModus.allCases, id: \.self) { modus in
-                        Text(modus.rawValue).tag(modus)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 150)
-                .labelsHidden()
-
                 if !code.isEmpty {
                     Text("\(code.components(separatedBy: "\n").count) Zeilen")
                         .font(.caption2).foregroundStyle(.tertiary).monospacedDigit()
@@ -257,18 +242,8 @@ struct EditSnippetView: View {
 
             Divider()
 
-            // Editor oder Vorschau
-            if editorModus == .editor {
-                TextEditor(text: $code)
-                    .font(.system(size: 13, design: .monospaced))
-                    .scrollContentBackground(.hidden)
-            } else {
-                CodeHighlightView(
-                    code: code.isEmpty ? "# Noch kein Code eingegeben…" : code,
-                    highlightName: effectiveHighlightName
-                )
-                .frame(maxHeight: .infinity, alignment: .topLeading)
-            }
+            // Nativer Code-Editor mit Live-Highlighting
+            SyntaxTextEditor(text: $code, highlightName: effectiveHighlightName)
 
             Divider()
 

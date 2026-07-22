@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 // MARK: - Theme Token Colors
 
@@ -78,6 +79,27 @@ enum SyntaxHighlighter {
             applyRule(rule, to: &result, in: code)
         }
         return result
+    }
+
+    /// Wendet Syntax-Highlighting direkt auf einen NSTextStorage an (für NSTextView-Editor).
+    /// Ersetzt nur Attribute — der Textinhalt bleibt unverändert, Undo-History bleibt erhalten.
+    static func applyHighlightingInPlace(storage: NSTextStorage, code: String, language: String, theme: SyntaxTheme, fontSize: Double) {
+        guard storage.length == (code as NSString).length else { return }
+        let tc = theme.tokenColors
+        let font = NSFont.monospacedSystemFont(ofSize: CGFloat(fontSize), weight: .regular)
+        let fullRange = NSRange(location: 0, length: storage.length)
+
+        storage.beginEditing()
+        storage.setAttributes([.font: font, .foregroundColor: NSColor(tc.plain)], range: fullRange)
+
+        for rule in rules(for: language.lowercased(), tc: tc) {
+            guard let regex = try? NSRegularExpression(pattern: rule.pattern, options: rule.options) else { continue }
+            let nsRange = NSRange(code.startIndex..., in: code)
+            for match in regex.matches(in: code, range: nsRange) {
+                storage.addAttribute(.foregroundColor, value: NSColor(rule.color), range: match.range)
+            }
+        }
+        storage.endEditing()
     }
 
     private static func applyRule(_ rule: Rule, to result: inout AttributedString, in code: String) {
