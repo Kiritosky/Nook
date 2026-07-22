@@ -16,7 +16,16 @@ struct NookApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
-            fatalError("ModelContainer konnte nicht erstellt werden: \(error)")
+            // Persistenter Speicher konnte nicht geöffnet werden (z. B. beschädigt
+            // oder fehlgeschlagene Migration). Statt hart abzustürzen fällt die App
+            // auf einen flüchtigen Speicher zurück – so bleibt sie bedienbar und die
+            // Sammlung auf der Platte wird NICHT überschrieben.
+            NSLog("[Nook] Persistenter Speicher fehlgeschlagen: \(error). Fallback: In-Memory.")
+            let fallback = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            if let container = try? ModelContainer(for: schema, configurations: [fallback]) {
+                return container
+            }
+            fatalError("ModelContainer konnte weder persistent noch flüchtig erstellt werden: \(error)")
         }
     }()
 

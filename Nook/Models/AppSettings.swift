@@ -41,3 +41,39 @@ enum SyntaxTheme: String, CaseIterable, Identifiable {
 
     var hintergrundFarbe: Color { Color(hex: hintergrundHex) }
 }
+
+// MARK: - App-Sprache (Oberfläche)
+
+enum AppSprache: String, CaseIterable, Identifiable {
+    case system, deutsch, englisch
+
+    var id: String { rawValue }
+
+    var titel: String {
+        switch self {
+        case .system:   return "Systemsprache"
+        case .deutsch:  return "Deutsch"
+        case .englisch: return "English"
+        }
+    }
+
+    /// Sprachkürzel oder nil für „Systemsprache".
+    var code: String? {
+        switch self {
+        case .system:   return nil
+        case .deutsch:  return "de"
+        case .englisch: return "en"
+        }
+    }
+
+    /// Ob die Oberfläche aktuell auf Englisch dargestellt werden soll.
+    static var effektivEnglisch: Bool {
+        let raw = UserDefaults.standard.string(forKey: "appSprache") ?? "system"
+        switch raw {
+        case AppSprache.deutsch.rawValue:  return false
+        case AppSprache.englisch.rawValue: return true
+        default: return (Locale.preferredLanguages.first ?? "de").hasPrefix("en")
+        }
+    }
+}
+

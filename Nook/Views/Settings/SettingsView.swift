@@ -87,6 +87,7 @@ struct SettingsView: View {
 struct GeneralSettingsView: View {
     @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
     @AppStorage("globalShortcut") private var globalShortcutRaw: String = StoredShortcut.defaultGlobal.rawValue
+    @AppStorage("appSprache") private var appSpracheRaw: String = AppSprache.system.rawValue
 
     private var versionString: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "–"
@@ -113,6 +114,24 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                Picker("Sprache der Oberfläche", selection: $appSpracheRaw) {
+                    ForEach(AppSprache.allCases) { sprache in
+                        Text(sprache.titel).tag(sprache.rawValue)
+                    }
+                }
+                .onChange(of: appSpracheRaw) { _, neu in
+                    let code = AppSprache(rawValue: neu)?.code
+                    if let code { UserDefaults.standard.set([code], forKey: "AppleLanguages") }
+                    else { UserDefaults.standard.removeObject(forKey: "AppleLanguages") }
+                }
+            } header: {
+                Label("Sprache", systemImage: "globe")
+            } footer: {
+                Text("Manche Bereiche übernehmen die Sprache erst nach einem Neustart der App.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
             Section {
                 Toggle("Beim Anmelden starten", isOn: $launchAtLogin)
                     .onChange(of: launchAtLogin) { _, newValue in

@@ -15,6 +15,9 @@ struct ContentView: View {
 
     @State private var papierkorb = PapierkorbManager()
 
+    @AppStorage("onboardingGesehen") private var onboardingGesehen = false
+    @State private var onboardingAnzeigen = false
+
     @State private var sidebarAuswahl: SidebarItem? = .alle
     @State private var selectedSnippet: Snippet?
     @State private var addSnippetAnzeigen = false
@@ -88,6 +91,9 @@ struct ContentView: View {
                 initialTitle: dropInitialTitle
             )
         }
+        .sheet(isPresented: $onboardingAnzeigen) {
+            OnboardingView()
+        }
         .onChange(of: pendingClipboardCode) { _, new in
             if !new.isEmpty { addSnippetAnzeigen = true }
         }
@@ -104,6 +110,7 @@ struct ContentView: View {
             syntaxTheme = scheme == .dark ? autoThemeDark : autoThemeLight
         }
         .onAppear {
+            if !onboardingGesehen { onboardingAnzeigen = true }
             SpotlightManager.indexAll(alleSnippets)
             if autoTheme {
                 syntaxTheme = colorScheme == .dark ? autoThemeDark : autoThemeLight
