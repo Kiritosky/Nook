@@ -47,10 +47,10 @@ struct BibliothekBrowser: View {
                                ziel: .projekt(name))
             }
         case .themen:
-            let namen = Set(snippets.map { $0.topic }.filter { !$0.isEmpty })
+            let namen = Set(snippets.flatMap { $0.themen })
             return namen.sorted().map { name in
                 Eintrag(id: name, symbol: "text.book.closed.fill", farbe: .teal, name: name,
-                        anzahl: snippets.filter { $0.topic == name }.count, ziel: .thema(name))
+                        anzahl: snippets.filter { $0.themen.contains(name) }.count, ziel: .thema(name))
             }
         case .tags:
             let namen = Set(snippets.flatMap { $0.tags })

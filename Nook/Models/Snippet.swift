@@ -164,6 +164,15 @@ class Snippet {
 
     var imPapierkorb: Bool { deletedAt != nil }
 
+    /// Themen funktionieren wie Tags: im `topic`-Feld durch Komma getrennt,
+    /// hier als einzelne, getrimmte Werte. (Speicherung bleibt ein String –
+    /// keine Schema-Migration nötig.)
+    var themen: [String] {
+        topic.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
     var effectiveLanguageName: String { languageOverride ?? language.rawValue }
 
     var effectiveHighlightName: String { customHighlightName ?? language.highlightName }

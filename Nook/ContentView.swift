@@ -22,12 +22,16 @@ struct ContentView: View {
     @State private var browserPfad: [BrowserZiel] = []
     @State private var selectedSnippet: Snippet?
     @State private var addSnippetAnzeigen = false
+    @State private var paletteAnzeigen = false
+    @State private var paletteWollteNeu = false
     @State private var tagFilter: String? = nil
     @State private var suchtext = ""
     @State private var dropHighlight = false
 
     // Clipboard-to-Snippet: MenuBar schreibt hier rein
     @AppStorage("pendingClipboardCode") private var pendingClipboardCode: String = ""
+    // „Neues Snippet" aus der Menüleiste (gleiches Muster wie Clipboard)
+    @AppStorage("pendingNeuesSnippet") private var pendingNeuesSnippet = false
 
     // Auto-Theme-Umschaltung
     @AppStorage("syntaxTheme")       private var syntaxTheme: SyntaxTheme = .catppuccinMocha
@@ -91,8 +95,33 @@ struct ContentView: View {
         .sheet(isPresented: $onboardingAnzeigen) {
             OnboardingView()
         }
+        // Befehls-Palette (⌘K). Nach dem Schließen ggf. „Neues Snippet" öffnen –
+        // erst nach onDismiss, damit sich die zwei Sheets nicht überlagern.
+        .sheet(isPresented: $paletteAnzeigen, onDismiss: {
+            if paletteWollteNeu { paletteWollteNeu = false; addSnippetAnzeigen = true }
+        }) {
+            CommandPalette(
+                onSnippetWählen: { snippet in
+                    sidebarAuswahl = .alle
+                    selectedSnippet = snippet
+                },
+                onNeuesSnippet: { paletteWollteNeu = true }
+            )
+        }
+        .background {
+            Button("") { paletteAnzeigen = true }
+                .keyboardShortcut("k", modifiers: .command)
+                .opacity(0)
+                .accessibilityHidden(true)
+        }
         .onChange(of: pendingClipboardCode) { _, new in
             if !new.isEmpty { addSnippetAnzeigen = true }
+        }
+        .onChange(of: pendingNeuesSnippet) { _, neu in
+            if neu {
+                addSnippetAnzeigen = true
+                pendingNeuesSnippet = false
+            }
         }
         .onChange(of: sidebarAuswahl) { _, _ in
             browserPfad.removeAll()   // Reingehen-Verlauf beim Wechsel zurücksetzen

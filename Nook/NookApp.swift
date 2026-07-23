@@ -85,7 +85,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var localShortcutMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
+        // Beim Start als vollwertige App (.regular): Nook öffnet ohnehin sofort
+        // das Hauptfenster, also gehören Dock-Icon UND App-Icon in Fenster-
+        // Verwaltung, Stage Manager, Window-Tiling und ⌘-Tab dazu. Startet die
+        // App dagegen als .accessory, fehlt das Icon in genau diesen Ansichten
+        // (das nachträgliche Umschalten auf .regular kommt für das Tiling-Panel
+        // zu spät). Sind später ALLE Fenster geschlossen, schaltet der
+        // willClose-Observer unten zurück auf .accessory (reiner Menüleisten-
+        // Betrieb).
+        NSApp.setActivationPolicy(.regular)
 
         let center = NotificationCenter.default
 

@@ -5,6 +5,8 @@
 
 import SwiftUI
 import SwiftData
+import AppKit
+import UniformTypeIdentifiers
 
 enum Sortierung: String, CaseIterable {
     case neueste        = "neueste"
@@ -38,6 +40,7 @@ struct SnippetListView: View {
     private var alleSnippets: [Snippet]
     @Query(filter: #Predicate<Snippet> { $0.deletedAt != nil }, sort: \Snippet.deletedAt, order: .reverse)
     private var papierkorbSnippets: [Snippet]
+    @Query(sort: \Projekt.name) private var projekte: [Projekt]
 
     let sidebarItem: SidebarItem
     @Binding var selectedSnippet: Snippet?
@@ -46,6 +49,16 @@ struct SnippetListView: View {
     @Binding var suchtext: String
     @State private var schwierigkeitsFilter: Int? = nil
     @AppStorage("snippetSortierung") private var sortierung: Sortierung = .neueste
+
+    // Massenaktionen (Mehrfachauswahl)
+    @State private var auswahlModus = false
+    @State private var mehrfachAuswahl: Set<PersistentIdentifier> = []
+    @State private var tagPopover = false
+    @State private var tagEingabe = ""
+
+    private var ausgewaehlteSnippets: [Snippet] {
+        gefilterteSnippets.filter { mehrfachAuswahl.contains($0.persistentModelID) }
+    }
 
     private var istPapierkorb: Bool { if case .papierkorb = sidebarItem { return true } else { return false } }
 
@@ -80,7 +93,7 @@ struct SnippetListView: View {
         case .customSprache(let name): gefiltert = alleSnippets.filter { $0.languageOverride == name }
         case .projekt(let proj):       gefiltert = alleSnippets.filter { $0.project == proj }
         case .tag(let tag):            gefiltert = alleSnippets.filter { $0.tags.contains(tag) }
-        case .thema(let thema):        gefiltert = alleSnippets.filter { $0.topic == thema }
+        case .thema(let thema):        gefiltert = alleSnippets.filter { $0.themen.contains(thema) }
         case .papierkorb:              gefiltert = papierkorbSnippets   // via Früh-Return oben abgedeckt
         case .projekteBrowser, .themenBrowser, .tagsBrowser:
             gefiltert = []   // werden nie direkt als Liste gezeigt (siehe ContentView-Browser)
@@ -180,8 +193,22 @@ struct SnippetListView: View {
                 ScrollView {
                     LazyVStack(spacing: 6) {
                         ForEach(gefilterteSnippets) { snippet in
-                            SnippetKarte(snippet: snippet, istAusgewaehlt: selectedSnippet == snippet)
-                                .onTapGesture { selectedSnippet = snippet }
+                            let markiert = mehrfachAuswahl.contains(snippet.persistentModelID)
+                            SnippetKarte(snippet: snippet,
+                                         istAusgewaehlt: auswahlModus ? markiert : selectedSnippet == snippet)
+                                .overlay(alignment: .topLeading) {
+                                    if auswahlModus {
+                                        Image(systemName: markiert ? "checkmark.circle.fill" : "circle")
+                                            .font(.system(size: 18))
+                                            .foregroundStyle(markiert ? Color.accentColor : Color.secondary.opacity(0.6))
+                                            .background(Circle().fill(.background).padding(2))
+                                            .padding(6)
+                                    }
+                                }
+                                .onTapGesture {
+                                    if auswahlModus { markierungWechseln(snippet) }
+                                    else { selectedSnippet = snippet }
+                                }
                                 .contextMenu {
                                     if snippet.imPapierkorb {
                                         Button { papierkorb.wiederherstellen(snippet) } label: {
@@ -221,6 +248,12 @@ struct SnippetListView: View {
                 }
             }
         }
+        .safeAreaInset(edge: .bottom) {
+            if auswahlModus {
+                massenAktionsLeiste
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .searchable(text: $suchtext, prompt: Text("Suchen… (#tag für Tags)"))
         .searchSuggestions {
             ForEach(tagVorschlaege, id: \.self) { tag in
@@ -236,6 +269,19 @@ struct SnippetListView: View {
                     Label("Hinzufügen", systemImage: "plus")
                 }
                 .keyboardShortcut("n", modifiers: .command)
+            }
+            if !istPapierkorb && !gefilterteSnippets.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            auswahlModus.toggle()
+                            if !auswahlModus { mehrfachAuswahl.removeAll() }
+                        }
+                    } label: {
+                        Label(auswahlModus ? "Fertig" : "Auswählen",
+                              systemImage: auswahlModus ? "checkmark.circle" : "checkmark.circle.badge.questionmark")
+                    }
+                }
             }
             ToolbarItem(placement: .secondaryAction) {
                 Menu {
@@ -302,6 +348,136 @@ struct SnippetListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(32)
+    }
+
+    // MARK: - Massenaktionen
+
+    private var massenAktionsLeiste: some View {
+        let anzahl = mehrfachAuswahl.count
+        let alleMarkiert = anzahl == gefilterteSnippets.count && anzahl > 0
+        return HStack(spacing: 10) {
+            Button(alleMarkiert ? "Keine" : "Alle") {
+                if alleMarkiert { mehrfachAuswahl.removeAll() }
+                else { mehrfachAuswahl = Set(gefilterteSnippets.map { $0.persistentModelID }) }
+            }
+            .buttonStyle(.plain).font(.caption).fontWeight(.medium)
+            .foregroundStyle(Color.accentColor)
+
+            Text("\(anzahl) ausgewählt")
+                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+
+            Spacer()
+
+            if anzahl > 0 {
+                aktionsButton("star", "Favorit setzen") { favoritSetzen(true) }
+                aktionsButton("pin", "Anheften") { anheften(true) }
+
+                Menu {
+                    Button("Kein Projekt") { projektZuweisen(nil) }
+                    if !projekte.isEmpty { Divider() }
+                    ForEach(projekte) { p in
+                        Button { projektZuweisen(p.name) } label: {
+                            Label(p.name, systemImage: p.symbolName)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "folder").font(.system(size: 14))
+                }
+                .menuStyle(.borderlessButton).fixedSize().help("Projekt zuweisen")
+
+                aktionsButton("number", "Tag hinzufügen") { tagEingabe = ""; tagPopover = true }
+                    .popover(isPresented: $tagPopover, arrowEdge: .top) { tagPopoverInhalt }
+
+                aktionsButton("square.and.arrow.up", "Auswahl exportieren") { exportierenAuswahl() }
+                aktionsButton("trash", "In den Papierkorb", rot: true) { loeschenAuswahl() }
+            }
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .background(.bar)
+        .overlay(alignment: .top) { Divider() }
+    }
+
+    private func aktionsButton(_ symbol: String, _ hilfe: String,
+                               rot: Bool = false, aktion: @escaping () -> Void) -> some View {
+        Button(action: aktion) {
+            Image(systemName: symbol)
+                .font(.system(size: 14))
+                .foregroundStyle(rot ? Color.red : Color.primary)
+                .frame(width: 30, height: 26)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain).help(hilfe)
+    }
+
+    private var tagPopoverInhalt: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Tag zu \(mehrfachAuswahl.count) Snippets hinzufügen")
+                .font(.caption).foregroundStyle(.secondary)
+            HStack {
+                TextField("Tag-Name", text: $tagEingabe)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 160)
+                    .onSubmit { tagHinzufuegen() }
+                Button("Hinzufügen") { tagHinzufuegen() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(tagEingabe.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding(14)
+    }
+
+    private func markierungWechseln(_ s: Snippet) {
+        if mehrfachAuswahl.contains(s.persistentModelID) {
+            mehrfachAuswahl.remove(s.persistentModelID)
+        } else {
+            mehrfachAuswahl.insert(s.persistentModelID)
+        }
+    }
+
+    private func favoritSetzen(_ wert: Bool) {
+        // Umschalten: wenn alle schon Favorit sind, entfernen – sonst setzen.
+        let alleFavorit = ausgewaehlteSnippets.allSatisfy { $0.isFavorite }
+        for s in ausgewaehlteSnippets { s.isFavorite = !alleFavorit }
+    }
+
+    private func anheften(_ wert: Bool) {
+        let alleGepinnt = ausgewaehlteSnippets.allSatisfy { $0.isPinned }
+        for s in ausgewaehlteSnippets { s.isPinned = !alleGepinnt }
+    }
+
+    private func projektZuweisen(_ name: String?) {
+        for s in ausgewaehlteSnippets { s.project = name }
+    }
+
+    private func tagHinzufuegen() {
+        let tag = tagEingabe.trimmingCharacters(in: .whitespaces)
+        guard !tag.isEmpty else { return }
+        for s in ausgewaehlteSnippets where !s.tags.contains(tag) {
+            s.tags.append(tag)
+        }
+        tagEingabe = ""
+        tagPopover = false
+    }
+
+    private func loeschenAuswahl() {
+        let ziele = ausgewaehlteSnippets
+        if let sel = selectedSnippet, ziele.contains(sel) { selectedSnippet = nil }
+        for s in ziele { papierkorb.loeschen(s) }
+        mehrfachAuswahl.removeAll()
+        withAnimation(.easeInOut(duration: 0.2)) { auswahlModus = false }
+    }
+
+    private func exportierenAuswahl() {
+        let ziele = ausgewaehlteSnippets
+        guard !ziele.isEmpty else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "Nook-Auswahl-\(ziele.count).json"
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if let data = try? SnippetImportExport.exportieren(ziele) {
+            try? data.write(to: url, options: .atomic)
+        }
     }
 
     private func duplizieren(_ original: Snippet) {

@@ -230,9 +230,9 @@ struct SnippetDetailView: View {
                             }
                         }
                     }
-                    if !snippet.topic.isEmpty {
+                    ForEach(snippet.themen, id: \.self) { thema in
                         metaChip {
-                            Label(snippet.topic, systemImage: "tag")
+                            Label(thema, systemImage: "tag")
                                 .font(.caption2).lineLimit(1)
                         }
                     }

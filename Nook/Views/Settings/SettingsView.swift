@@ -46,7 +46,7 @@ enum SettingsSektion: String, Hashable, CaseIterable {
 }
 
 struct SettingsView: View {
-    @State private var auswahl: SettingsSektion? = .erscheinungsbild
+    @State private var auswahl: SettingsSektion? = .allgemein
 
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
@@ -63,7 +63,11 @@ struct SettingsView: View {
             }
             .listStyle(.sidebar)
             .navigationTitle("Einstellungen")
-            .navigationSplitViewColumnWidth(min: 160, ideal: 180, max: 200)
+            .navigationSplitViewColumnWidth(160)
+            // Kein Sidebar-Ausblenden-Knopf: Die Seitenleiste ist bei einem
+            // Einstellungsfenster fest — der Toggle ließ oben nur einen
+            // abgeschnitten wirkenden Leerraum zurück.
+            .toolbar(removing: .sidebarToggle)
         } detail: {
             Group {
                 switch auswahl {
@@ -387,20 +391,12 @@ struct LanguageSettingsView: View {
                             }
                         }
                     }
+
+                    HinzufuegenZeile(titel: "Eigene Sprache hinzufügen") { hinzufuegenAnzeigen = true }
                 }
             }
-
-            Divider()
-
-            HStack {
-                Button { hinzufuegenAnzeigen = true } label: {
-                    Label("Sprache hinzufügen", systemImage: "plus")
-                }.buttonStyle(.borderedProminent)
-                Spacer()
-                Text("\(customLanguages.count) eigene \(customLanguages.count == 1 ? "Sprache" : "Sprachen")")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            .padding(12)
+            .listStyle(.inset)
+            .scrollContentBackground(.hidden)
         }
         .navigationTitle("Sprachen")
         .sheet(isPresented: $hinzufuegenAnzeigen, onDismiss: { neuName = ""; neuHighlight = ""; neuSymbol = "doc.text" }) {
@@ -481,15 +477,16 @@ struct ProjektSettingsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            List {
-                if projekte.isEmpty {
-                    ContentUnavailableView(
-                        "Keine Projekte",
-                        systemImage: "folder",
-                        description: Text("Erstelle dein erstes Projekt um Snippets zu organisieren.")
-                    )
-                } else {
+        Group {
+            if projekte.isEmpty {
+                LeererZustand(
+                    symbol: "folder.badge.plus",
+                    titel: "Keine Projekte",
+                    beschreibung: "Projekte helfen dir, zusammengehörige Snippets zu gruppieren.",
+                    cta: "Erstes Projekt erstellen"
+                ) { hinzufuegenAnzeigen = true }
+            } else {
+                List {
                     ForEach(projekte) { projekt in
                         HStack(spacing: 10) {
                             FarbIcon(symbol: projekt.symbolName, farbe: projekt.farbe, groesse: 26)
@@ -502,20 +499,12 @@ struct ProjektSettingsView: View {
                         }
                         .padding(.vertical, 2)
                     }
+
+                    HinzufuegenZeile(titel: "Projekt hinzufügen") { hinzufuegenAnzeigen = true }
                 }
+                .listStyle(.inset)
+                .scrollContentBackground(.hidden)
             }
-
-            Divider()
-
-            HStack {
-                Button { hinzufuegenAnzeigen = true } label: {
-                    Label("Projekt hinzufügen", systemImage: "plus")
-                }.buttonStyle(.borderedProminent)
-                Spacer()
-                Text("\(projekte.count) \(projekte.count == 1 ? "Projekt" : "Projekte")")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            .padding(12)
         }
         .navigationTitle("Projekte")
         .sheet(isPresented: $hinzufuegenAnzeigen, onDismiss: resetFelder) {
@@ -574,21 +563,22 @@ struct ProjektSettingsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("SYMBOL").font(.caption2).fontWeight(.semibold).foregroundStyle(.tertiary).tracking(0.5)
-                        LazyVGrid(columns: Array(repeating: GridItem(.fixed(44), spacing: 6), count: 5), spacing: 6) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 6), spacing: 8) {
                             ForEach(projektSymbole, id: \.self) { symbol in
+                                let aktiv = neuSymbol == symbol
                                 Button { neuSymbol = symbol } label: {
-                                    FarbIcon(
-                                        symbol: symbol,
-                                        farbe: neuSymbol == symbol ? Color(hex: neuColorHex) : .secondary.opacity(0.5),
-                                        groesse: 36
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 36 * 0.26)
-                                            .stroke(neuSymbol == symbol ? Color(hex: neuColorHex).opacity(0.6) : Color.clear, lineWidth: 2)
-                                    )
+                                    Image(systemName: symbol)
+                                        .font(.system(size: 15, weight: .medium))
+                                        .foregroundStyle(aktiv ? Color.white : Color.secondary)
+                                        .frame(width: 38, height: 38)
+                                        .background(
+                                            aktiv ? Color(hex: neuColorHex) : Color.secondary.opacity(0.1),
+                                            in: RoundedRectangle(cornerRadius: 9)
+                                        )
                                 }
                                 .buttonStyle(.plain)
                                 .animation(.easeInOut(duration: 0.15), value: neuSymbol)
+                                .animation(.easeInOut(duration: 0.2), value: neuColorHex)
                             }
                         }
                     }
@@ -621,6 +611,70 @@ struct ProjektSettingsView: View {
         neuName = ""
         neuSymbol = "folder.fill"
         neuColorHex = "5856D6"
+    }
+}
+
+// MARK: - „Hinzufügen"-Zeile (letzte Zeile einer Liste)
+
+/// Dezente Aktionszeile am Ende einer Liste — ersetzt sowohl die frühere
+/// Bodenleiste (die neben der Seitenleiste unsymmetrisch wirkte) als auch den
+/// Toolbar-Knopf (der oben deplatziert war). Sitzt sauber in der Liste, sodass
+/// alle Panes gleich groß bleiben.
+struct HinzufuegenZeile: View {
+    let titel: LocalizedStringKey
+    let aktion: () -> Void
+
+    var body: some View {
+        Button(action: aktion) {
+            HStack(spacing: 10) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(Color.accentColor)
+                Text(titel)
+                    .foregroundStyle(Color.accentColor)
+                Spacer()
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Zentrierter Leer-Zustand (für List-Panes ohne Inhalt)
+
+/// Elegant zentrierter Platzhalter mit direkter Handlungsaufforderung.
+/// Füllt den ganzen Detailbereich – dadurch sitzt er wirklich mittig
+/// (statt wie eine ContentUnavailableView oben in einer List zu „verrutschen").
+struct LeererZustand: View {
+    let symbol: String
+    let titel: LocalizedStringKey
+    let beschreibung: LocalizedStringKey
+    let cta: LocalizedStringKey
+    let aktion: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: symbol)
+                .font(.system(size: 42, weight: .light))
+                .foregroundStyle(.tertiary)
+            VStack(spacing: 6) {
+                Text(titel)
+                    .font(.title3).fontWeight(.semibold)
+                Text(beschreibung)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            Button(action: aktion) {
+                Label(cta, systemImage: "plus")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .padding(.top, 2)
+        }
+        .frame(maxWidth: 340)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(40)
     }
 }
 

@@ -11,6 +11,10 @@ struct EditSnippetView: View {
     @Bindable var snippet: Snippet
     @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
+    @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil }) private var alleSnippets: [Snippet]
+
+    private var vorhandeneThemen: [String] { Array(Set(alleSnippets.flatMap { $0.themen })) }
+    private var vorhandeneTags: [String]   { Array(Set(alleSnippets.flatMap { $0.tags })) }
 
     @State private var titel: String
     @State private var code: String
@@ -128,6 +132,9 @@ struct EditSnippetView: View {
                     feldSektion("Thema") {
                         TextField("z.B. Algorithmen, Netzwerk, UI", text: $thema)
                             .textFieldStyle(.roundedBorder)
+                        Text("Mehrere Themen mit Komma trennen")
+                            .font(.caption2).foregroundStyle(.tertiary)
+                        VorschlagsChips(alle: vorhandeneThemen, text: $thema, farbe: .teal)
                     }
 
                     feldSektion("Projekt") {
@@ -161,6 +168,7 @@ struct EditSnippetView: View {
                             .textFieldStyle(.roundedBorder)
                         Text("Mehrere Tags mit Komma trennen")
                             .font(.caption2).foregroundStyle(.tertiary)
+                        VorschlagsChips(alle: vorhandeneTags, text: $tagsText, farbe: .purple)
                     }
                 }
                 .padding(16)
@@ -306,13 +314,17 @@ struct EditSnippetView: View {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
+        let themen = thema.split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+
         let builtIn = Language(rawValue: spracheName)
         let customHighlight = customLanguages.first { $0.name == spracheName }?.highlightName
 
         snippet.title           = titel.trimmingCharacters(in: .whitespaces)
         snippet.code            = code
         snippet.language        = builtIn ?? .other
-        snippet.topic           = thema
+        snippet.topic           = themen.joined(separator: ", ")
         snippet.project         = projektName.isEmpty ? nil : projektName
         snippet.difficulty      = schwierigkeit
         snippet.tags            = tags

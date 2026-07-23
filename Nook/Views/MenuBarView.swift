@@ -23,9 +23,13 @@ struct MenuBarView: View {
     @State private var expandedID: PersistentIdentifier? = nil
     @State private var filter: MenuBarFilter = .alle
 
+    @AppStorage("syntaxTheme") private var syntaxTheme: SyntaxTheme = .catppuccinMocha
+
     // Clipboard-Code wird über AppStorage an ContentView übergeben (Sheet kann
     // nicht zuverlässig aus MenuBarExtra geöffnet werden)
     @AppStorage("pendingClipboardCode") private var pendingClipboardCode: String = ""
+    // Gleiches Muster: „Neues Snippet" aus der Menüleiste anstoßen.
+    @AppStorage("pendingNeuesSnippet") private var pendingNeuesSnippet = false
 
     private var clipboardText: String? {
         let text = NSPasteboard.general.string(forType: .string)
@@ -59,11 +63,29 @@ struct MenuBarView: View {
     var body: some View {
         VStack(spacing: 0) {
 
+            // MARK: Kopfzeile (Marke + schneller Zugriff)
+            HStack(spacing: 8) {
+                FarbIcon(symbol: "curlybraces", farbe: .accentColor, groesse: 22)
+                Text("Nook")
+                    .font(.headline)
+                Spacer()
+                headerAktion(symbol: "plus", help: "Neues Snippet") {
+                    bringHauptfensterInVordergrund()
+                    pendingNeuesSnippet = true
+                }
+                headerAktion(symbol: "gearshape", help: "Einstellungen") {
+                    NSApp.setActivationPolicy(.regular)
+                    openSettings()
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+            }
+            .padding(.horizontal, 12).padding(.top, 12).padding(.bottom, 10)
+
             // MARK: Suchfeld
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary).font(.caption)
-                TextField("Snippet suchen...", text: $suchtext)
+                TextField("Snippet suchen …", text: $suchtext)
                     .textFieldStyle(.plain)
                 if !suchtext.isEmpty {
                     Button { suchtext = "" } label: {
@@ -71,7 +93,9 @@ struct MenuBarView: View {
                     }.buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 12).padding(.vertical, 10)
+            .padding(.horizontal, 10).padding(.vertical, 7)
+            .background(Color.secondary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 12).padding(.bottom, 10)
 
             Divider()
 
@@ -114,6 +138,7 @@ struct MenuBarView: View {
                         ForEach(angezeigteSnippets) { snippet in
                             MenuBarZeile(
                                 snippet: snippet,
+                                theme: syntaxTheme,
                                 istKopiert: kopierteID == snippet.persistentModelID,
                                 istExpanded: expandedID == snippet.persistentModelID,
                                 onKopieren: { kopieren(snippet) },
@@ -158,46 +183,47 @@ struct MenuBarView: View {
                     Divider()
                 }
 
-                // Öffnen / Zähler / Einstellungen / Beenden
+                // Öffnen · Zähler · Beenden
                 HStack(spacing: 0) {
                     Button {
                         bringHauptfensterInVordergrund()
                     } label: {
                         HStack(spacing: 5) {
                             Image(systemName: "macwindow")
-                            Text("Öffnen")
+                            Text("Fenster öffnen")
                         }
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).fontWeight(.medium).foregroundStyle(.primary)
                     }
-                    .buttonStyle(.plain).padding(.horizontal, 12).padding(.vertical, 8)
+                    .buttonStyle(.plain).padding(.horizontal, 12).padding(.vertical, 9)
 
                     Spacer()
                     Text("\(snippets.count) Snippet\(snippets.count == 1 ? "" : "s")")
-                        .font(.caption2).foregroundStyle(.tertiary)
+                        .font(.caption2).foregroundStyle(.tertiary).monospacedDigit()
                     Spacer()
 
-                    // Einstellungen öffnen
-                    Button {
-                        NSApp.setActivationPolicy(.regular)
-                        openSettings()
-                        NSApp.activate(ignoringOtherApps: true)
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .font(.caption).foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 10).padding(.vertical, 8)
-                    .help("Einstellungen")
-
                     Button { NSApp.terminate(nil) } label: {
-                        HStack(spacing: 5) { Text("Beenden"); Image(systemName: "power") }
+                        HStack(spacing: 5) { Image(systemName: "power"); Text("Beenden") }
                             .font(.caption).foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain).padding(.horizontal, 12).padding(.vertical, 8)
+                    .buttonStyle(.plain).padding(.horizontal, 12).padding(.vertical, 9)
                 }
             }
         }
         .frame(width: 360, height: 460)
+    }
+
+    // MARK: - Header-Aktion (kleiner runder Button)
+
+    @ViewBuilder
+    private func headerAktion(symbol: String, help: String, aktion: @escaping () -> Void) -> some View {
+        Button(action: aktion) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 26, height: 26)
+                .background(Color.secondary.opacity(0.1), in: Circle())
+        }
+        .buttonStyle(.plain).help(help)
     }
 
     // MARK: - Filter-Pill
@@ -292,6 +318,7 @@ struct MenuBarView: View {
 
 struct MenuBarZeile: View {
     let snippet: Snippet
+    let theme: SyntaxTheme
     let istKopiert: Bool
     let istExpanded: Bool
     let onKopieren: () -> Void
@@ -351,15 +378,16 @@ struct MenuBarZeile: View {
                 .buttonStyle(.plain)
             }
 
-            // Code-Vorschau (aufgeklappt)
+            // Code-Vorschau (aufgeklappt) — folgt dem gewählten Syntax-Theme,
+            // damit sie in Light- und Dark-Themes gleichermaßen lesbar bleibt.
             if istExpanded && !codePreview.isEmpty {
                 Text(codePreview)
                     .font(.system(size: 10.5, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.8))
+                    .foregroundStyle(theme.isLight ? .black.opacity(0.8) : .white.opacity(0.85))
                     .lineLimit(5)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 12).padding(.vertical, 10)
-                    .background(Color.black.opacity(0.55))
+                    .background(theme.hintergrundFarbe)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }

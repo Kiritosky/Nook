@@ -266,6 +266,74 @@ struct TagSidebarZeile: View {
     }
 }
 
+// MARK: - VorschlagsChips (Autovervollständigung für Komma-Listen)
+
+/// Zeigt vorhandene Werte (Tags oder Themen) als anklickbare Chips unter einem
+/// Komma-getrennten Textfeld. Klick hängt den Wert an. Gefiltert nach dem
+/// gerade getippten Teilwort, bereits gewählte werden ausgeblendet.
+struct VorschlagsChips: View {
+    let alle: [String]
+    @Binding var text: String
+    var farbe: Color = .purple
+    var maxAnzahl: Int = 10
+
+    private var gewaehlt: Set<String> {
+        Set(teile(text).map { $0.lowercased() })
+    }
+
+    private var teilEingabe: String {
+        (text.split(separator: ",", omittingEmptySubsequences: false).last.map(String.init) ?? "")
+            .trimmingCharacters(in: .whitespaces).lowercased()
+    }
+
+    private var vorschlaege: [String] {
+        alle
+            .filter { v in
+                let vl = v.lowercased()
+                return !gewaehlt.contains(vl) && (teilEingabe.isEmpty || vl.contains(teilEingabe))
+            }
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+            .prefix(maxAnzahl)
+            .map { $0 }
+    }
+
+    var body: some View {
+        if !vorschlaege.isEmpty {
+            FlexiWrap(spacing: 5) {
+                ForEach(vorschlaege, id: \.self) { v in
+                    Button { hinzufuegen(v) } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "plus").font(.system(size: 7, weight: .bold))
+                            Text(v).font(.caption2)
+                        }
+                        .padding(.horizontal, 7).padding(.vertical, 3)
+                        .background(farbe.opacity(0.1))
+                        .foregroundStyle(farbe)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(farbe.opacity(0.2), lineWidth: 0.5))
+                    }
+                    .buttonStyle(.plain)
+                    .help("\(v) hinzufügen")
+                }
+            }
+        }
+    }
+
+    private func teile(_ s: String) -> [String] {
+        s.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+    }
+
+    private func hinzufuegen(_ v: String) {
+        // Angefangenes Teilwort ersetzen, dann Komma für den nächsten Wert.
+        var stuecke = text.split(separator: ",", omittingEmptySubsequences: false)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        if stuecke.isEmpty { stuecke = [""] }
+        stuecke[stuecke.count - 1] = v
+        let sauber = stuecke.filter { !$0.isEmpty }
+        text = sauber.joined(separator: ", ") + ", "
+    }
+}
+
 // MARK: - ProjektPill (für Add/Edit Snippet)
 
 struct ProjektPill: View {

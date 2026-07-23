@@ -8,8 +8,6 @@
 	<string>https://raw.githubusercontent.com/Kiritosky/Nook/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>VP3JtnOZzBUEiZmd8ikiaRayVZIHSlaqv02uUixgcq8=</string>
-	<key>SUEnableInstallerLauncherService</key>
-	<true/>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 </dict>
