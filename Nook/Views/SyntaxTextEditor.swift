@@ -149,6 +149,17 @@ private struct SyntaxEditorRepresentable: NSViewRepresentable {
 
         textView.delegate = context.coordinator
 
+        // Native Find-Bar (⌘F Suchen, ⌥⌘F Suchen & Ersetzen) – inline über der
+        // Text-View, voll funktionsfähig ohne eigenes Such-UI.
+        textView.usesFindBar = true
+        textView.isIncrementalSearchingEnabled = true
+
+        // Editor-Tastaturbefehle (⌘D duplizieren, ⌥↑/⌥↓ Zeile verschieben,
+        // ⌘F/⌥⌘F Find-Bar) über einen lokalen Monitor – ohne NSTextView zu
+        // subclassen (das würde das TextKit-2-Rendering auf macOS 26 zerstören).
+        context.coordinator.textView = textView
+        context.coordinator.installiereTastenmonitor()
+
         // Scroll-Position an den SwiftUI-Gutter zurückmelden
         scrollView.contentView.postsBoundsChangedNotifications = true
         NotificationCenter.default.addObserver(
@@ -191,6 +202,8 @@ private struct SyntaxEditorRepresentable: NSViewRepresentable {
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: SyntaxEditorRepresentable
         weak var scrollView: NSScrollView?
+        weak var textView: NSTextView?
+        private var tastenmonitor: Any?
         var isApplying   = false
         var lastText     = ""
         var lastLang     = ""
@@ -199,7 +212,87 @@ private struct SyntaxEditorRepresentable: NSViewRepresentable {
 
         init(_ parent: SyntaxEditorRepresentable) { self.parent = parent }
 
-        deinit { NotificationCenter.default.removeObserver(self) }
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+            if let m = tastenmonitor { NSEvent.removeMonitor(m) }
+        }
+
+        // MARK: - Editor-Tastaturbefehle (⌘D, ⌥↑/↓, ⌘F/⌥⌘F)
+
+        func installiereTastenmonitor() {
+            tastenmonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard let self,
+                      let tv = self.textView,
+                      tv.window?.firstResponder === tv else { return event }
+
+                let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+                let nurCmd = flags == .command
+                let cmdOpt = flags == [.command, .option]
+                let nurOpt = flags == .option
+                let taste  = event.charactersIgnoringModifiers?.lowercased()
+
+                if nurCmd, taste == "f" { self.zeigeFindBar(tv, ersetzen: false); return nil }
+                if cmdOpt, taste == "f" { self.zeigeFindBar(tv, ersetzen: true);  return nil }
+                if nurCmd, taste == "d" { self.zeileDuplizieren(tv); return nil }
+                if nurOpt, event.keyCode == 126 { self.zeileVerschieben(tv, hoch: true);  return nil } // ↑
+                if nurOpt, event.keyCode == 125 { self.zeileVerschieben(tv, hoch: false); return nil } // ↓
+                return event
+            }
+        }
+
+        private func zeigeFindBar(_ tv: NSTextView, ersetzen: Bool) {
+            let item = NSMenuItem()
+            item.tag = (ersetzen ? NSTextFinder.Action.showReplaceInterface
+                                 : NSTextFinder.Action.showFindInterface).rawValue
+            tv.performTextFinderAction(item)
+        }
+
+        /// Aktuelle Zeile (oder markierte Zeilen) darunter duplizieren.
+        private func zeileDuplizieren(_ tv: NSTextView) {
+            let ns  = tv.string as NSString
+            let sel = tv.selectedRange()
+            let lineRange = ns.lineRange(for: sel)
+            let zeilenText = ns.substring(with: lineRange)
+            let hatUmbruch = zeilenText.hasSuffix("\n")
+            let einfuegung = hatUmbruch ? zeilenText : "\n" + zeilenText
+            let einfuegeOrt = lineRange.location + lineRange.length
+            let bereich = NSRange(location: einfuegeOrt, length: 0)
+            guard tv.shouldChangeText(in: bereich, replacementString: einfuegung) else { return }
+            tv.replaceCharacters(in: bereich, with: einfuegung)
+            tv.didChangeText()
+            // Cursor auf die duplizierte Zeile (gleiche Spalte) setzen
+            let versatz = hatUmbruch ? lineRange.length : (einfuegung as NSString).length
+            let neuOrt = min(sel.location + versatz, (tv.string as NSString).length)
+            tv.setSelectedRange(NSRange(location: neuOrt, length: sel.length))
+        }
+
+        /// Aktuelle Zeile mit der darüber-/darunterliegenden tauschen.
+        private func zeileVerschieben(_ tv: NSTextView, hoch: Bool) {
+            let ns  = tv.string as NSString
+            let sel = tv.selectedRange()
+            var zeilen = tv.string.components(separatedBy: "\n")
+            let idx = ns.substring(to: min(sel.location, ns.length))
+                .reduce(0) { $0 + ($1 == "\n" ? 1 : 0) }
+            let ziel = hoch ? idx - 1 : idx + 1
+            guard ziel >= 0, ziel < zeilen.count else { return }
+
+            let spalte = sel.location - startOffset(idx, in: zeilen)
+            zeilen.swapAt(idx, ziel)
+            let neu = zeilen.joined(separator: "\n")
+            let ganz = NSRange(location: 0, length: ns.length)
+            guard tv.shouldChangeText(in: ganz, replacementString: neu) else { return }
+            tv.replaceCharacters(in: ganz, with: neu)
+            tv.didChangeText()
+
+            let neueZeilenLen = (zeilen[ziel] as NSString).length
+            let neuOrt = startOffset(ziel, in: zeilen) + min(max(spalte, 0), neueZeilenLen)
+            tv.setSelectedRange(NSRange(location: neuOrt, length: 0))
+        }
+
+        /// Zeichen-Offset des Zeilenanfangs `index` (Zeilen mit "\n" verbunden).
+        private func startOffset(_ index: Int, in zeilen: [String]) -> Int {
+            zeilen.prefix(index).reduce(0) { $0 + ($1 as NSString).length + 1 }
+        }
 
         /// Scroll-Offset + aktuelle Cursor-Zeile an den SwiftUI-Gutter melden.
         private func reportMetrics() {
