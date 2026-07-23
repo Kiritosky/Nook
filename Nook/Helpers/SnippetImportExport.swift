@@ -26,6 +26,13 @@ struct SnippetDTO: Codable {
     var languageOverride: String?
     var customHighlightName: String?
 
+    // Ab Schema 1 optional angehängt, damit ein automatisches Backup ein
+    // vollständiger Schnappschuss ist. Ältere Dateien ohne diese Felder bleiben
+    // lesbar (nil → Standardwert).
+    var deletedAt: Date?
+    var lastAccessedAt: Date?
+    var copyCount: Int?
+
     @MainActor
     init(_ s: Snippet) {
         title = s.title; code = s.code; language = s.language.rawValue
@@ -33,6 +40,7 @@ struct SnippetDTO: Codable {
         tags = s.tags; descriptionText = s.descriptionText; output = s.output
         createdAt = s.createdAt; isFavorite = s.isFavorite; isPinned = s.isPinned
         languageOverride = s.languageOverride; customHighlightName = s.customHighlightName
+        deletedAt = s.deletedAt; lastAccessedAt = s.lastAccessedAt; copyCount = s.copyCount
     }
 
     @MainActor
@@ -43,9 +51,12 @@ struct SnippetDTO: Codable {
             topic: topic, project: project, difficulty: difficulty,
             tags: tags, descriptionText: descriptionText, output: output,
             isFavorite: isFavorite, isPinned: isPinned,
-            languageOverride: languageOverride, customHighlightName: customHighlightName
+            languageOverride: languageOverride, customHighlightName: customHighlightName,
+            deletedAt: deletedAt
         )
         snippet.createdAt = createdAt
+        snippet.lastAccessedAt = lastAccessedAt
+        snippet.copyCount = copyCount ?? 0
         return snippet
     }
 }

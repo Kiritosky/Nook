@@ -627,6 +627,13 @@ struct DataSettingsView: View {
 
     @State private var status: StatusMeldung?
 
+    // Automatische Sicherung
+    @AppStorage("autoBackupAktiv")        private var autoBackupAktiv = true
+    @AppStorage("autoBackupIntervallTage") private var autoBackupIntervallTage = 1
+    @AppStorage("autoBackupAnzahl")       private var autoBackupAnzahl = 10
+    @State private var backups: [BackupManager.BackupDatei] = []
+    @State private var wiederherstellenZiel: BackupManager.BackupDatei?
+
     private struct StatusMeldung: Identifiable {
         let id = UUID()
         let text: String
@@ -646,6 +653,68 @@ struct DataSettingsView: View {
                 }
             } header: {
                 Label("Sammlung", systemImage: "square.stack.3d.up.fill")
+            }
+
+            // MARK: Automatische Sicherung
+            Section {
+                Toggle("Automatisch sichern", isOn: $autoBackupAktiv)
+
+                if autoBackupAktiv {
+                    Picker("Häufigkeit", selection: $autoBackupIntervallTage) {
+                        Text("Bei jedem Start").tag(0)
+                        Text("Täglich").tag(1)
+                        Text("Wöchentlich").tag(7)
+                    }
+                    Stepper("\(autoBackupAnzahl) Sicherungen aufbewahren",
+                            value: $autoBackupAnzahl, in: 1...50)
+                }
+
+                Button {
+                    jetztSichern()
+                } label: {
+                    Label("Jetzt sichern", systemImage: "clock.arrow.circlepath")
+                }
+                .disabled(alleSnippets.isEmpty)
+
+                Button {
+                    if let ordner = try? BackupManager.backupOrdner() {
+                        NSWorkspace.shared.open(ordner)
+                    }
+                } label: {
+                    Label("Sicherungsordner öffnen", systemImage: "folder")
+                }
+                .disabled(backups.isEmpty)
+            } header: {
+                Label("Automatische Sicherung", systemImage: "externaldrive.badge.timemachine")
+            } footer: {
+                Text("Nook legt regelmäßig eine vollständige Sicherung im App-Ordner an — ganz ohne Zutun. Die ältesten werden automatisch entfernt.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            if !backups.isEmpty {
+                Section {
+                    ForEach(backups) { b in
+                        HStack(spacing: 12) {
+                            Image(systemName: "clock.badge.checkmark")
+                                .foregroundStyle(.green)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(b.erstellt, format: .dateTime.day().month().year().hour().minute())
+                                    .font(.callout)
+                                Text(groesseText(b.groesse))
+                                    .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+                            }
+                            Spacer()
+                            Button("Wiederherstellen …") { wiederherstellenZiel = b }
+                                .buttonStyle(.borderless).font(.callout)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                } header: {
+                    Label("Vorhandene Sicherungen", systemImage: "clock.arrow.2.circlepath")
+                } footer: {
+                    Text("Wiederherstellen fügt fehlende Snippets aus der Sicherung hinzu — vorhandene bleiben unberührt.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
 
             Section {
@@ -677,9 +746,48 @@ struct DataSettingsView: View {
         }
         .formStyle(.grouped)
         .navigationTitle("Daten")
+        .onAppear { backups = BackupManager.vorhandene() }
+        .alert("Sicherung wiederherstellen?",
+               isPresented: Binding(get: { wiederherstellenZiel != nil },
+                                    set: { if !$0 { wiederherstellenZiel = nil } })) {
+            Button("Abbrechen", role: .cancel) { wiederherstellenZiel = nil }
+            Button("Wiederherstellen") {
+                if let ziel = wiederherstellenZiel { wiederherstellen(ziel) }
+            }
+        } message: {
+            Text("Fehlende Snippets aus dieser Sicherung werden wieder hinzugefügt. Bereits vorhandene bleiben unverändert.")
+        }
     }
 
     // MARK: Aktionen
+
+    private func jetztSichern() {
+        do {
+            let url = try BackupManager.sichern(context: modelContext)
+            backups = BackupManager.vorhandene()
+            status = .init(text: "Gesichert: \(url.lastPathComponent)", fehler: false)
+        } catch {
+            status = .init(text: "Sicherung fehlgeschlagen: \(error.localizedDescription)", fehler: true)
+        }
+    }
+
+    private func wiederherstellen(_ b: BackupManager.BackupDatei) {
+        wiederherstellenZiel = nil
+        do {
+            let r = try BackupManager.wiederherstellen(aus: b.url, context: modelContext)
+            let teile = [
+                r.neu > 0 ? "\(r.neu) wiederhergestellt" : nil,
+                r.uebersprungen > 0 ? "\(r.uebersprungen) übersprungen" : nil
+            ].compactMap { $0 }
+            status = .init(text: teile.isEmpty ? "Nichts wiederherzustellen." : teile.joined(separator: ", ") + ".", fehler: false)
+        } catch {
+            status = .init(text: "Wiederherstellen fehlgeschlagen — ist es eine gültige Sicherung?", fehler: true)
+        }
+    }
+
+    private func groesseText(_ bytes: Int) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
 
     private func exportieren() {
         let panel = NSSavePanel()

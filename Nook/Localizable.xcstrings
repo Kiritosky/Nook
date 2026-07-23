@@ -31,6 +31,16 @@
         }
       }
     },
+    "%lld Sicherungen aufbewahren": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep %lld backups"
+          }
+        }
+      }
+    },
     "%lld Snippet%@": {
       "localizations": {
         "de": {
@@ -253,6 +263,26 @@
         }
       }
     },
+    "Automatisch sichern": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back up automatically"
+          }
+        }
+      }
+    },
+    "Automatische Sicherung": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic backup"
+          }
+        }
+      }
+    },
     "Backend": {
       "localizations": {
         "en": {
@@ -279,6 +309,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Quit"
+          }
+        }
+      }
+    },
+    "Bei jedem Start": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On every launch"
           }
         }
       }
@@ -583,6 +623,16 @@
         }
       }
     },
+    "Fehlende Snippets aus dieser Sicherung werden wieder hinzugefügt. Bereits vorhandene bleiben unverändert.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snippets missing from this backup will be added back. Existing ones remain unchanged."
+          }
+        }
+      }
+    },
     "Filter aufheben": {
       "localizations": {
         "en": {
@@ -693,6 +743,16 @@
         }
       }
     },
+    "Häufigkeit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frequency"
+          }
+        }
+      }
+    },
     "Import": {
       "localizations": {
         "en": {
@@ -729,6 +789,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "In-app shortcuts"
+          }
+        }
+      }
+    },
+    "Jetzt sichern": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back up now"
           }
         }
       }
@@ -1013,6 +1083,16 @@
         }
       }
     },
+    "Nook legt regelmäßig eine vollständige Sicherung im App-Ordner an — ganz ohne Zutun. Die ältesten werden automatisch entfernt.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nook regularly saves a full backup in its app folder — automatically. The oldest ones are removed on their own."
+          }
+        }
+      }
+    },
     "Nook startet automatisch als Menüleisten-App, wenn du dich anmeldest.": {
       "localizations": {
         "en": {
@@ -1189,6 +1269,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Difficulty"
+          }
+        }
+      }
+    },
+    "Sicherung wiederherstellen?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore backup?"
+          }
+        }
+      }
+    },
+    "Sicherungsordner öffnen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open backup folder"
           }
         }
       }
@@ -1553,6 +1653,16 @@
         }
       }
     },
+    "Täglich": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily"
+          }
+        }
+      }
+    },
     "Version": {
       "localizations": {
         "en": {
@@ -1569,6 +1679,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Try a different term."
+          }
+        }
+      }
+    },
+    "Vorhandene Sicherungen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Existing backups"
           }
         }
       }
@@ -1603,6 +1723,26 @@
         }
       }
     },
+    "Wiederherstellen fügt fehlende Snippets aus der Sicherung hinzu — vorhandene bleiben unberührt.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restoring adds snippets missing from the backup — existing ones stay untouched."
+          }
+        }
+      }
+    },
+    "Wiederherstellen …": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore …"
+          }
+        }
+      }
+    },
     "Wähle ein Snippet aus der Liste oder erstelle eines mit ⌘N.\nCode-Dateien kannst du auch direkt hierher ziehen.": {
       "localizations": {
         "en": {
@@ -1619,6 +1759,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose a category"
+          }
+        }
+      }
+    },
+    "Wöchentlich": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly"
           }
         }
       }

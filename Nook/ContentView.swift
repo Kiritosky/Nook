@@ -113,6 +113,12 @@ struct ContentView: View {
         .onAppear {
             if !onboardingGesehen { onboardingAnzeigen = true }
             SpotlightManager.indexAll(alleSnippets)
+            // Automatische Sicherung nach dem Start (blockiert den Start nicht).
+            let context = modelContext
+            Task {
+                try? await Task.sleep(for: .seconds(2))
+                BackupManager.sichereFalligFalls(context: context)
+            }
             if autoTheme {
                 syntaxTheme = colorScheme == .dark ? autoThemeDark : autoThemeLight
             }
