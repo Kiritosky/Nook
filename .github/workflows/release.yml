@@ -32,6 +32,9 @@ jobs:
           echo "--- SDKs ---"
           xcodebuild -showsdks
 
+      - name: dmgbuild installieren (schöner Installer)
+        run: pip3 install --break-system-packages dmgbuild
+
       - name: DMG bauen
         run: ./scripts/build-dmg.sh
 

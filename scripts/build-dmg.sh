@@ -39,17 +39,25 @@ VERSION="$(defaults read "$APP/Contents/Info" CFBundleShortVersionString 2>/dev/
 OUT="$APP_NAME-$VERSION.dmg"
 
 echo "▸ Packe DMG (Version $VERSION) …"
-STAGE="$WORK/stage"
-mkdir -p "$STAGE"
-cp -R "$APP" "$STAGE/"
-ln -s /Applications "$STAGE/Applications"   # Drag-to-install-Ziel
-
+BG="scripts/dmg-assets/background.tiff"
+ICON="Nook/Assets.xcassets/AppIcon.appiconset/nookicon512.png"
 rm -f "$OUT"
-hdiutil create \
-  -volname "$APP_NAME" \
-  -srcfolder "$STAGE" \
-  -ov -format UDZO \
-  "$OUT" >/dev/null
+
+if python3 -c "import dmgbuild" 2>/dev/null; then
+  # Schöner Installer: Hintergrundbild, feste Icon-Positionen, Volume-Icon.
+  python3 -m dmgbuild \
+    -s scripts/dmg_settings.py \
+    -D app="$APP" -D bg="$BG" -D icon="$ICON" \
+    "$APP_NAME" "$OUT"
+else
+  # Fallback ohne dmgbuild: schlichte DMG per hdiutil.
+  echo "  (dmgbuild nicht gefunden — schlichte DMG via hdiutil)"
+  STAGE="$WORK/stage"
+  mkdir -p "$STAGE"
+  cp -R "$APP" "$STAGE/"
+  ln -s /Applications "$STAGE/Applications"
+  hdiutil create -volname "$APP_NAME" -srcfolder "$STAGE" -ov -format UDZO "$OUT" >/dev/null
+fi
 
 echo "✓ Fertig: $OUT"
 echo "  SHA-256: $(shasum -a 256 "$OUT" | awk '{print $1}')"
