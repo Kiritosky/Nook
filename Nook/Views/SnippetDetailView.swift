@@ -47,6 +47,7 @@ struct SnippetDetailView: View {
     @State private var kodeCopied = false
     @State private var markdownCopied = false
     @State private var bildKopiert = false
+    @State private var gistSheet = false
     @State private var shortcutsAnzeigen = false
 
     private let schwierigkeitLabels = ["", "Anfänger", "Mittel", "Fortgeschritten"]
@@ -139,7 +140,7 @@ struct SnippetDetailView: View {
                     Button {
                         SnippetBildExport.speichern(snippet, theme: syntaxTheme)
                     } label: {
-                        Label("Bild speichern …", systemImage: "square.and.arrow.down")
+                        Label("Als Bild speichern …", systemImage: "photo")
                     }
                     Button {
                         bildKopiert = SnippetBildExport.kopieren(snippet, theme: syntaxTheme)
@@ -147,13 +148,21 @@ struct SnippetDetailView: View {
                             Task { try? await Task.sleep(for: .seconds(1.5)); bildKopiert = false }
                         }
                     } label: {
-                        Label("Bild kopieren", systemImage: "doc.on.doc")
+                        Label(bildKopiert ? "Bild kopiert!" : "Bild kopieren",
+                              systemImage: bildKopiert ? "checkmark" : "doc.on.doc")
+                    }
+                    if GitHubKonto.shared.istKonfiguriert {
+                        Divider()
+                        Button {
+                            gistSheet = true
+                        } label: {
+                            Label("Als Gist veröffentlichen …", systemImage: "arrow.up.forward.square")
+                        }
                     }
                 } label: {
-                    Label(bildKopiert ? "Kopiert!" : "Als Bild",
-                          systemImage: bildKopiert ? "checkmark" : "photo")
+                    Label("Teilen", systemImage: "square.and.arrow.up")
                 }
-                .help("Snippet als Bild teilen (Carbon-Stil)")
+                .help("Teilen: als Bild oder als GitHub-Gist")
             }
             if snippet.imPapierkorb {
                 ToolbarItem(placement: .primaryAction) {
@@ -178,6 +187,7 @@ struct SnippetDetailView: View {
             }
         }
         .sheet(isPresented: $bearbeitenAnzeigen) { EditSnippetView(snippet: snippet) }
+        .sheet(isPresented: $gistSheet) { GistVeröffentlichenSheet(snippet: snippet) }
         .sheet(isPresented: $shortcutsAnzeigen) { ShortcutsOverlay() }
         .onAppear { snippet.lastAccessedAt = Date() }
         .onKeyPress(.init("?")) { shortcutsAnzeigen = true; return .handled }

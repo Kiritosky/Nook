@@ -193,6 +193,15 @@ struct GeneralSettingsView: View {
             }
 
             Section {
+                GitHubKontoView()
+            } header: {
+                Label("GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
+            } footer: {
+                Text("Melde dich an, um Snippets als Gist zu veröffentlichen. Gists importieren geht unter Daten.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            Section {
                 LabeledContent("Version") {
                     Text(versionString).foregroundStyle(.secondary)
                 }
@@ -695,6 +704,10 @@ struct DataSettingsView: View {
     @State private var backups: [BackupManager.BackupDatei] = []
     @State private var wiederherstellenZiel: BackupManager.BackupDatei?
 
+    // GitHub-Gist-Import
+    @State private var gistURL = ""
+    @State private var gistLäuft = false
+
     private struct StatusMeldung: Identifiable {
         let id = UUID()
         let text: String
@@ -804,6 +817,24 @@ struct DataSettingsView: View {
                 Text("Fügt Snippets aus einer Nook-Backup-Datei hinzu. Bereits vorhandene Snippets werden übersprungen.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+
+            Section {
+                HStack {
+                    TextField("Gist-URL oder -ID", text: $gistURL)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { gistImportieren() }
+                    Button { gistImportieren() } label: {
+                        if gistLäuft { ProgressView().controlSize(.small) }
+                        else { Text("Importieren") }
+                    }
+                    .disabled(gistURL.trimmingCharacters(in: .whitespaces).isEmpty || gistLäuft)
+                }
+            } header: {
+                Label("GitHub-Gist importieren", systemImage: "chevron.left.forwardslash.chevron.right")
+            } footer: {
+                Text("Importiert die Dateien eines öffentlichen Gists als neue Snippets. Für private Gists in Einstellungen → Allgemein bei GitHub anmelden.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
         .navigationTitle("Daten")
@@ -889,5 +920,31 @@ struct DataSettingsView: View {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: Date())
+    }
+
+    private func gistImportieren() {
+        guard let id = GitHubKonto.gistID(aus: gistURL) else {
+            status = .init(text: "Ungültige Gist-URL oder -ID.", fehler: true); return
+        }
+        gistLäuft = true
+        Task {
+            defer { gistLäuft = false }
+            do {
+                let dateien = try await GitHubKonto.shared.importiere(gistID: id)
+                for d in dateien {
+                    let ext = (d.name as NSString).pathExtension
+                    let titel = (d.name as NSString).deletingPathExtension
+                    modelContext.insert(Snippet(
+                        title: titel.isEmpty ? d.name : titel,
+                        code: d.inhalt,
+                        language: Language.fromExtension(ext)
+                    ))
+                }
+                status = .init(text: "\(dateien.count) Datei(en) aus Gist importiert.", fehler: false)
+                gistURL = ""
+            } catch {
+                status = .init(text: "Gist-Import fehlgeschlagen: \(error.localizedDescription)", fehler: true)
+            }
+        }
     }
 }
