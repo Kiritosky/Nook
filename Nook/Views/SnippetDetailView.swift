@@ -46,6 +46,7 @@ struct SnippetDetailView: View {
     @State private var bearbeitenAnzeigen = false
     @State private var kodeCopied = false
     @State private var markdownCopied = false
+    @State private var bildKopiert = false
     @State private var shortcutsAnzeigen = false
 
     private let schwierigkeitLabels = ["", "Anfänger", "Mittel", "Fortgeschritten"]
@@ -132,6 +133,27 @@ struct SnippetDetailView: View {
                           systemImage: markdownCopied ? "checkmark" : "doc.richtext")
                 }
                 .help("Als Markdown kopieren")
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    Button {
+                        SnippetBildExport.speichern(snippet, theme: syntaxTheme)
+                    } label: {
+                        Label("Bild speichern …", systemImage: "square.and.arrow.down")
+                    }
+                    Button {
+                        bildKopiert = SnippetBildExport.kopieren(snippet, theme: syntaxTheme)
+                        if bildKopiert {
+                            Task { try? await Task.sleep(for: .seconds(1.5)); bildKopiert = false }
+                        }
+                    } label: {
+                        Label("Bild kopieren", systemImage: "doc.on.doc")
+                    }
+                } label: {
+                    Label(bildKopiert ? "Kopiert!" : "Als Bild",
+                          systemImage: bildKopiert ? "checkmark" : "photo")
+                }
+                .help("Snippet als Bild teilen (Carbon-Stil)")
             }
             if snippet.imPapierkorb {
                 ToolbarItem(placement: .primaryAction) {
