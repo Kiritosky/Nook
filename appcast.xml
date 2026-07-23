@@ -3,13 +3,13 @@
     <channel>
         <title>Nook</title>
         <item>
-            <title>1.0.1</title>
-            <pubDate>Thu, 23 Jul 2026 13:41:57 +0000</pubDate>
-            <sparkle:version>2</sparkle:version>
-            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <title>1.0.2</title>
+            <pubDate>Thu, 23 Jul 2026 14:15:21 +0000</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>26.5</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-            <enclosure url="https://github.com/Kiritosky/Nook/releases/download/v1.0.1/Nook-1.0.1.dmg" length="3449837" type="application/octet-stream" sparkle:edSignature="jQKkyB3RZCN+dBiASYW69Ly20cSSrsS0Ov/sk8IRfE1mfXsOPs5gtEwcuH/RV2k4ge2x3jGH0krL6mpJ83UyBA=="/>
+            <enclosure url="https://github.com/Kiritosky/Nook/releases/download/v1.0.2/Nook-1.0.2.dmg" length="3450596" type="application/octet-stream" sparkle:edSignature="YtfmK2/RLk6AxskJMqvyJZtUHzHcpmVPc7+E8C7I44dvbSda13H8WuWdLZJq49fKxWNTZr+mt00RKXvLMtnhDg=="/>
         </item>
     </channel>
 </rss>
