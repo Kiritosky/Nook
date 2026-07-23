@@ -1,0 +1,54 @@
+name: Release DMG
+
+# Baut Nook und veröffentlicht eine .dmg am GitHub-Release, sobald ein
+# Versions-Tag (z. B. v1.0.0) gepusht wird. Manuell auslösbar über den
+# „Run workflow"-Knopf (workflow_dispatch).
+#
+# Hinweis: Die App wird NICHT signiert/notarisiert (kein Apple-Account nötig).
+# Nutzer bestätigen beim ersten Start einmalig „Trotzdem öffnen".
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write   # nötig, um ein Release + Asset anzulegen
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Neuestes stabiles Xcode wählen
+        run: sudo xcode-select -switch "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+
+      - name: Diagnose — Xcode & verfügbare SDKs
+        run: |
+          xcodebuild -version
+          echo "--- SDKs ---"
+          xcodebuild -showsdks
+
+      - name: DMG bauen
+        run: ./scripts/build-dmg.sh
+
+      - name: Release erstellen und DMG anhängen
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Nook-*.dmg
+          generate_release_notes: true
+          body: |
+            ### Installation
+
+            1. `.dmg` öffnen und **Nook** in den Programme-Ordner ziehen.
+            2. Beim ersten Start erscheint „**Nook kann nicht auf Schadsoftware
+               überprüft werden**" — das ist normal, die App ist noch nicht
+               signiert (Hobby-Projekt).
+            3. **Systemeinstellungen → Datenschutz & Sicherheit** öffnen, nach
+               unten scrollen und bei Nook auf „**Trotzdem öffnen**" klicken.
+
+            > Die App ist quelloffen einsehbar — du kannst sie auch selbst in
+            > Xcode bauen (siehe README).
