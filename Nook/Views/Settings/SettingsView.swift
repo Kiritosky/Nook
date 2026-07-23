@@ -85,6 +85,7 @@ struct SettingsView: View {
 // MARK: - Allgemein
 
 struct GeneralSettingsView: View {
+    @EnvironmentObject private var updater: UpdaterController
     @State private var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled
     @AppStorage("globalShortcut") private var globalShortcutRaw: String = StoredShortcut.defaultGlobal.rawValue
     @AppStorage("appSprache") private var appSpracheRaw: String = AppSprache.system.rawValue
@@ -197,6 +198,12 @@ struct GeneralSettingsView: View {
                 LabeledContent("Plattform") {
                     Text("macOS").foregroundStyle(.secondary)
                 }
+                Button {
+                    updater.nachUpdatesSuchen()
+                } label: {
+                    Label("Nach Updates suchen …", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .disabled(!updater.kannPruefen)
             } header: {
                 Label("Über Nook", systemImage: "info.circle")
             }

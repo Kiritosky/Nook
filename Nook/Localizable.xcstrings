@@ -223,6 +223,16 @@
         }
       }
     },
+    "Auf Updates prüfen …": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check for Updates …"
+          }
+        }
+      }
+    },
     "Aus Datei importieren …": {
       "localizations": {
         "en": {
@@ -999,6 +1009,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Filter by #%@"
+          }
+        }
+      }
+    },
+    "Nach Updates suchen …": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check for Updates …"
           }
         }
       }

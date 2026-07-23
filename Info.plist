@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Sparkle-Auto-Update. Übrige Info.plist-Keys generiert Xcode
+	     (GENERATE_INFOPLIST_FILE=YES) und führt sie hiermit zusammen. -->
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/Kiritosky/Nook/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>VP3JtnOZzBUEiZmd8ikiaRayVZIHSlaqv02uUixgcq8=</string>
+	<key>SUEnableInstallerLauncherService</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+</dict>
+</plist>

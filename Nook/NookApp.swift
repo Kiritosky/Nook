@@ -10,6 +10,8 @@ import SwiftData
 struct NookApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
+    @StateObject private var updater = UpdaterController()
+
     @AppStorage("appSprache") private var appSpracheRaw = AppSprache.system.rawValue
 
     /// Gewählte Oberflächensprache – überschreibt die Locale aller Szenen live.
@@ -45,13 +47,21 @@ struct NookApp: App {
             ContentView()
                 .frame(minWidth: 860, minHeight: 540)
                 .environment(\.locale, oberflaechenLocale)
+                .environmentObject(updater)
         }
         .defaultSize(width: 1200, height: 760)
         .modelContainer(sharedModelContainer)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Auf Updates prüfen …") { updater.nachUpdatesSuchen() }
+                    .disabled(!updater.kannPruefen)
+            }
+        }
 
         MenuBarExtra {
             MenuBarView()
                 .environment(\.locale, oberflaechenLocale)
+                .environmentObject(updater)
         } label: {
             Image(systemName: "curlybraces")
         }
@@ -61,6 +71,7 @@ struct NookApp: App {
         Settings {
             SettingsView()
                 .environment(\.locale, oberflaechenLocale)
+                .environmentObject(updater)
         }
         .modelContainer(sharedModelContainer)
     }

@@ -46,6 +46,30 @@ jobs:
           name: Nook-dmg
           path: Nook-*.dmg
 
+      - name: Appcast signieren und committen (Sparkle)
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          # Sparkle-Werkzeuge holen
+          curl -sL "https://github.com/sparkle-project/Sparkle/releases/download/2.9.4/Sparkle-2.9.4.tar.xz" -o /tmp/sparkle.tar.xz
+          mkdir -p /tmp/sparkle && tar -xf /tmp/sparkle.tar.xz -C /tmp/sparkle
+          # DMG in eigenen Ordner, signierten Appcast erzeugen (Key von stdin)
+          mkdir -p /tmp/cast && cp Nook-*.dmg /tmp/cast/
+          PREFIX="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/"
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" | /tmp/sparkle/bin/generate_appcast \
+            --ed-key-file - --download-url-prefix "$PREFIX" /tmp/cast
+          # appcast.xml nach main committen (Feed-URL zeigt auf raw main)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B main origin/main
+          cp /tmp/cast/appcast.xml appcast.xml
+          git add appcast.xml
+          git commit -m "CI: appcast für ${GITHUB_REF_NAME}" || echo "keine Änderung am Appcast"
+          git push origin main
+
       - name: Release erstellen und DMG anhängen
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
@@ -61,6 +85,9 @@ jobs:
                signiert (Hobby-Projekt).
             3. **Systemeinstellungen → Datenschutz & Sicherheit** öffnen, nach
                unten scrollen und bei Nook auf „**Trotzdem öffnen**" klicken.
+
+            Ab dieser Version aktualisiert sich Nook **automatisch** (Sparkle) —
+            künftige Updates kommen ohne erneuten Download.
 
             > Die App ist quelloffen einsehbar — du kannst sie auch selbst in
             > Xcode bauen (siehe README).
