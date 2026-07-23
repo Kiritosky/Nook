@@ -56,7 +56,7 @@ struct SidebarView: View {
         case .customSprache(let name): return alleSnippets.filter { $0.languageOverride == name }.count
         case .projekt(let proj):       return alleSnippets.filter { $0.project == proj }.count
         case .tag(let tag):            return alleSnippets.filter { $0.tags.contains(tag) }.count
-        case .thema(let thema):        return alleSnippets.filter { $0.topic == thema }.count
+        case .thema(let thema):        return alleSnippets.filter { $0.themen.contains(thema) }.count
         case .papierkorb:              return papierkorbSnippets.count
         case .projekteBrowser:         return alleProjektNamen.count
         case .themenBrowser:           return alleThemen.count
@@ -84,7 +84,7 @@ struct SidebarView: View {
     }
 
     private var alleThemen: [String] {
-        Array(Set(alleSnippets.map { $0.topic }.filter { !$0.isEmpty })).sorted()
+        Array(Set(alleSnippets.flatMap { $0.themen })).sorted()
     }
 
     private var topSprache: (name: String, farbe: Color)? {
