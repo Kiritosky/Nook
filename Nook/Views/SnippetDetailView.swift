@@ -380,6 +380,7 @@ struct SnippetDetailView: View {
         NSPasteboard.general.setString(snippet.code, forType: .string)
         snippet.copyCount += 1
         kodeCopied = true
+        ToastZentrale.shared.zeige("Code kopiert")
         Task { try? await Task.sleep(for: .seconds(1.5)); kodeCopied = false }
     }
 
@@ -394,6 +395,7 @@ struct SnippetDetailView: View {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(md, forType: .string)
         markdownCopied = true
+        ToastZentrale.shared.zeige("Als Markdown kopiert")
         Task { try? await Task.sleep(for: .seconds(1.5)); markdownCopied = false }
     }
 }

@@ -27,6 +27,9 @@
         }
       }
     },
+    "@%@" : {
+
+    },
     "#" : {
 
     },
@@ -175,6 +178,15 @@
         }
       }
     },
+    "Abmelden" : {
+
+    },
+    "Aktuelle Suche als Sammlung sichern" : {
+
+    },
+    "Aktuelle Suche als Smart-Sammlung in der Seitenleiste sichern" : {
+
+    },
     "Alle" : {
       "localizations" : {
         "en" : {
@@ -206,6 +218,15 @@
         }
       }
     },
+    "Als Bild speichern …" : {
+
+    },
+    "Als Gist veröffentlichen" : {
+
+    },
+    "Als Gist veröffentlichen …" : {
+
+    },
     "Als Markdown kopieren" : {
       "localizations" : {
         "en" : {
@@ -215,6 +236,9 @@
           }
         }
       }
+    },
+    "Als Sammlung sichern" : {
+
     },
     "Anfänger" : {
       "extractionState" : "stale",
@@ -237,6 +261,9 @@
           }
         }
       }
+    },
+    "Angemeldet" : {
+
     },
     "Anheften" : {
       "localizations" : {
@@ -413,6 +440,12 @@
         }
       }
     },
+    "Bild kopieren" : {
+
+    },
+    "Bild kopiert!" : {
+
+    },
     "Blitz" : {
       "localizations" : {
         "en" : {
@@ -463,6 +496,9 @@
         }
       }
     },
+    "Dafür musst du dich erst mit GitHub anmelden (Einstellungen → Allgemein → GitHub)." : {
+
+    },
     "Das Syntax-Theme wechselt automatisch mit dem macOS Dark/Light Mode." : {
       "localizations" : {
         "en" : {
@@ -472,6 +508,9 @@
           }
         }
       }
+    },
+    "Datei" : {
+
     },
     "Daten" : {
       "localizations" : {
@@ -503,6 +542,9 @@
           }
         }
       }
+    },
+    "Der Browser wurde geöffnet. Warte auf Bestätigung …" : {
+
     },
     "Diese Kürzel folgen macOS-Konventionen und können nicht geändert werden." : {
       "localizations" : {
@@ -730,6 +772,9 @@
         }
       }
     },
+    "Für alle sichtbar und auffindbar." : {
+
+    },
     "Gehirn" : {
       "localizations" : {
         "en" : {
@@ -750,6 +795,9 @@
         }
       }
     },
+    "Gib diesen Code auf **github.com/login/device** ein:" : {
+
+    },
     "Gibt den Code eines Nook-Snippets zurück, damit er in anderen Aktionen verwendet werden kann." : {
       "localizations" : {
         "en" : {
@@ -769,6 +817,18 @@
           }
         }
       }
+    },
+    "Gist-URL oder -ID" : {
+
+    },
+    "GitHub" : {
+
+    },
+    "GitHub ist noch nicht eingerichtet (Client-ID fehlt in GitHubClient.swift)." : {
+
+    },
+    "GitHub-Gist importieren" : {
+
     },
     "Globaler Shortcut" : {
       "localizations" : {
@@ -829,6 +889,12 @@
           }
         }
       }
+    },
+    "Importieren" : {
+
+    },
+    "Importiert die Dateien eines öffentlichen Gists als neue Snippets. Für private Gists in Einstellungen → Allgemein bei GitHub anmelden." : {
+
     },
     "In den Papierkorb (mit Rückgängig)" : {
       "localizations" : {
@@ -999,6 +1065,9 @@
         }
       }
     },
+    "Link kopieren" : {
+
+    },
     "Löschen" : {
       "localizations" : {
         "en" : {
@@ -1072,6 +1141,15 @@
         }
       }
     },
+    "Melde dich an, um Snippets als Gist zu veröffentlichen. Gists importieren geht unter Daten." : {
+
+    },
+    "Meldet dich sicher über den Browser an (Device Flow). Nook speichert nur ein Zugriffstoken im Schlüsselbund — nie dein Passwort." : {
+
+    },
+    "Mit GitHub anmelden" : {
+
+    },
     "Mittel" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1123,6 +1201,9 @@
         }
       }
     },
+    "Name der Sammlung" : {
+
+    },
     "Netz" : {
       "localizations" : {
         "en" : {
@@ -1167,6 +1248,9 @@
 
     },
     "Neues Snippet: %@" : {
+
+    },
+    "Nicht gelistet (secret) — nur wer den Link hat, sieht ihn." : {
 
     },
     "Noch keine eigenen Sprachen." : {
@@ -1229,8 +1313,10 @@
         }
       }
     },
+    "Öffentlicher Gist" : {
+
+    },
     "Öffnen" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1349,6 +1435,9 @@
         }
       }
     },
+    "Query: %@" : {
+
+    },
     "Rückgängig" : {
       "localizations" : {
         "en" : {
@@ -1379,6 +1468,12 @@
         }
       }
     },
+    "Sammlung löschen" : {
+
+    },
+    "Schließen" : {
+
+    },
     "Schriftgröße" : {
       "localizations" : {
         "en" : {
@@ -1399,6 +1494,9 @@
           }
         }
       }
+    },
+    "Sichern" : {
+
     },
     "Sicherung wiederherstellen?" : {
       "localizations" : {
@@ -1726,6 +1824,12 @@
         }
       }
     },
+    "Teilen" : {
+
+    },
+    "Teilen: als Bild oder als GitHub-Gist" : {
+
+    },
     "Template" : {
       "localizations" : {
         "en" : {
@@ -1830,6 +1934,18 @@
           }
         }
       }
+    },
+    "Verbinde …" : {
+
+    },
+    "Veröffentliche …" : {
+
+    },
+    "Veröffentlichen" : {
+
+    },
+    "Veröffentlicht als @%@" : {
+
     },
     "Version" : {
       "localizations" : {

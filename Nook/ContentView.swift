@@ -85,6 +85,7 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: papierkorb.zuletztGeloescht)
         .environment(papierkorb)
+        .nookToast()
         // Datei-Drop → neues Snippet
         .onDrop(of: [.fileURL], isTargeted: $dropHighlight) { providers in
             verarbeiteDroppedFiles(providers)

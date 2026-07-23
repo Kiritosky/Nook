@@ -696,6 +696,7 @@ struct SnippetKarte: View {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(snippet.code, forType: .string)
         istKopiert = true
+        ToastZentrale.shared.zeige("Code kopiert")
         Task { try? await Task.sleep(for: .seconds(1.5)); istKopiert = false }
     }
 }
