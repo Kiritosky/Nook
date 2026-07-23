@@ -53,6 +53,11 @@ enum BackupManager {
     /// Alle vorhandenen Sicherungen, neueste zuerst.
     static func vorhandene() -> [BackupDatei] {
         guard let ordner = try? backupOrdner() else { return [] }
+        return vorhandene(in: ordner)
+    }
+
+    /// Wie `vorhandene()`, aber für ein beliebiges Verzeichnis (testbar).
+    static func vorhandene(in ordner: URL) -> [BackupDatei] {
         let fm = FileManager.default
         let urls = (try? fm.contentsOfDirectory(
             at: ordner,
@@ -117,11 +122,17 @@ enum BackupManager {
 
     // MARK: Rotation
 
-    /// Behält nur die neuesten N Sicherungen.
+    /// Behält nur die neuesten N Sicherungen (N aus den Einstellungen).
     static func rotieren() {
+        guard let ordner = try? backupOrdner() else { return }
         let anzahl = UserDefaults.standard.object(forKey: keepKey) as? Int ?? standardAnzahl
+        rotieren(in: ordner, behalte: anzahl)
+    }
+
+    /// Wie `rotieren()`, aber für ein beliebiges Verzeichnis + Anzahl (testbar).
+    static func rotieren(in ordner: URL, behalte anzahl: Int) {
         guard anzahl > 0 else { return }
-        let alle = vorhandene()
+        let alle = vorhandene(in: ordner)
         guard alle.count > anzahl else { return }
         for datei in alle.dropFirst(anzahl) {
             try? FileManager.default.removeItem(at: datei.url)
