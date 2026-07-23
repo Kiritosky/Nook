@@ -127,6 +127,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         center.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
             self?.registriereGlobalenShortcut()
         }
+
+        // Beim Start das Hauptfenster nach vorn holen. Ohne das startet Nook
+        // als .accessory unsichtbar hinter anderen Fenstern (kein Dock-Icon) und
+        // wirkt „tot". Sobald ein Fenster main wird, schaltet der Observer oben
+        // auf .regular; schließt der Nutzer es, lebt Nook in der Menüleiste weiter.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            NSApp.activate(ignoringOtherApps: true)
+            let fenster = NSApp.windows.first {
+                $0.canBecomeMain && !$0.isKind(of: NSPanel.self)
+            }
+            fenster?.makeKeyAndOrderFront(nil)
+        }
     }
 
     private func registriereGlobalenShortcut() {
