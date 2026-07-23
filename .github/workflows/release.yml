@@ -35,7 +35,16 @@ jobs:
       - name: DMG bauen
         run: ./scripts/build-dmg.sh
 
+      # Bei manuellen Läufen (ohne Tag): DMG als herunterladbares Artefakt
+      # ablegen, damit man die Pipeline testen kann, ohne ein Release zu schneiden.
+      - name: DMG als Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nook-dmg
+          path: Nook-*.dmg
+
       - name: Release erstellen und DMG anhängen
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: Nook-*.dmg
