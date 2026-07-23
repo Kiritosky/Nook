@@ -43,6 +43,7 @@ struct SnippetListView: View {
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
 
     let sidebarItem: SidebarItem
+    var titelOverride: String? = nil
     @Binding var selectedSnippet: Snippet?
     @Binding var addSnippetAnzeigen: Bool
     @Binding var tagFilter: String?
@@ -55,6 +56,10 @@ struct SnippetListView: View {
     @State private var mehrfachAuswahl: Set<PersistentIdentifier> = []
     @State private var tagPopover = false
     @State private var tagEingabe = ""
+
+    // Smart-Sammlung aus aktueller Suche
+    @State private var sammlungSpeichern = false
+    @State private var sammlungName = ""
 
     private var ausgewaehlteSnippets: [Snippet] {
         gefilterteSnippets.filter { mehrfachAuswahl.contains($0.persistentModelID) }
@@ -94,6 +99,7 @@ struct SnippetListView: View {
         case .projekt(let proj):       gefiltert = alleSnippets.filter { $0.project == proj }
         case .tag(let tag):            gefiltert = alleSnippets.filter { $0.tags.contains(tag) }
         case .thema(let thema):        gefiltert = alleSnippets.filter { $0.themen.contains(thema) }
+        case .smartSammlung:           gefiltert = alleSnippets   // Filterung via suchtext (Query der Sammlung)
         case .papierkorb:              gefiltert = papierkorbSnippets   // via Früh-Return oben abgedeckt
         case .projekteBrowser, .themenBrowser, .tagsBrowser:
             gefiltert = []   // werden nie direkt als Liste gezeigt (siehe ContentView-Browser)
@@ -120,19 +126,14 @@ struct SnippetListView: View {
         let text = suchtext.trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return r }
 
-        // Explizite Tag-Suche: "#tag" filtert ausschließlich nach Tags.
-        if text.hasPrefix("#") {
-            let begriff = String(text.dropFirst()).trimmingCharacters(in: .whitespaces)
-            guard !begriff.isEmpty else { return r }
-            return r.filter { $0.tags.contains { $0.localizedCaseInsensitiveContains(begriff) } }
-        }
-
-        return r.filter {
-            $0.title.localizedCaseInsensitiveContains(text) ||
-            $0.topic.localizedCaseInsensitiveContains(text) ||
-            $0.code.localizedCaseInsensitiveContains(text) ||
-            $0.effectiveLanguageName.localizedCaseInsensitiveContains(text) ||
-            $0.tags.joined(separator: " ").localizedCaseInsensitiveContains(text)
+        // Einheitliche Suche über SucheParser: Freitext (Volltext inkl. Code) +
+        // Filter-Tokens (lang:, projekt:, #tag, is:favorit …). Damit funktioniert
+        // in der Liste dasselbe wie in der Command-Palette und in Smart-Sammlungen.
+        let (filter, freitext) = SucheParser.parse(text)
+        return r.filter { s in
+            guard filter.passt(s) else { return false }
+            if freitext.isEmpty { return true }
+            return SucheParser.bewerte(s, freitext: freitext) != nil
         }
     }
 
@@ -261,7 +262,7 @@ struct SnippetListView: View {
                     .searchCompletion("#\(tag)")
             }
         }
-        .navigationTitle(LocalizedStringKey(titelFuerAuswahl))
+        .navigationTitle(LocalizedStringKey(titelOverride ?? titelFuerAuswahl))
         .navigationSplitViewColumnWidth(min: 260, ideal: 300)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -294,6 +295,15 @@ struct SnippetListView: View {
                     Label("Sortierung", systemImage: "arrow.up.arrow.down")
                 }
             }
+            if !istPapierkorb && !suchtext.trimmingCharacters(in: .whitespaces).isEmpty {
+                ToolbarItem(placement: .secondaryAction) {
+                    Button { sammlungName = ""; sammlungSpeichern = true } label: {
+                        Label("Als Sammlung sichern", systemImage: "sparkles")
+                    }
+                    .help("Aktuelle Suche als Smart-Sammlung in der Seitenleiste sichern")
+                    .popover(isPresented: $sammlungSpeichern, arrowEdge: .bottom) { sammlungPopover }
+                }
+            }
         }
     }
 
@@ -307,6 +317,7 @@ struct SnippetListView: View {
         case .projekt(let proj):       return proj
         case .tag(let tag):            return "#\(tag)"
         case .thema(let thema):        return thema
+        case .smartSammlung:           return "Sammlung"
         case .papierkorb:              return "Papierkorb"
         case .projekteBrowser:         return "Projekte"
         case .themenBrowser:           return "Themen"
@@ -348,6 +359,36 @@ struct SnippetListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(32)
+    }
+
+    // MARK: - Smart-Sammlung anlegen
+
+    private var sammlungPopover: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Aktuelle Suche als Sammlung sichern")
+                .font(.caption).fontWeight(.medium)
+            Text("Query: \(suchtext)")
+                .font(.system(.caption2, design: .monospaced))
+                .foregroundStyle(.secondary).lineLimit(2)
+            HStack {
+                TextField("Name der Sammlung", text: $sammlungName)
+                    .textFieldStyle(.roundedBorder).frame(width: 200)
+                    .onSubmit { sammlungAnlegen() }
+                Button("Sichern") { sammlungAnlegen() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(sammlungName.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding(14)
+    }
+
+    private func sammlungAnlegen() {
+        let name  = sammlungName.trimmingCharacters(in: .whitespaces)
+        let query = suchtext.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !query.isEmpty else { return }
+        modelContext.insert(SmartSammlung(name: name, query: query))
+        sammlungSpeichern = false
+        sammlungName = ""
     }
 
     // MARK: - Massenaktionen

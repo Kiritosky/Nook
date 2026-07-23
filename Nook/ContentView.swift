@@ -12,6 +12,15 @@ struct ContentView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil })
     private var alleSnippets: [Snippet]
+    @Query private var sammlungen: [SmartSammlung]
+
+    private func sammlung(_ id: PersistentIdentifier) -> SmartSammlung? {
+        sammlungen.first { $0.persistentModelID == id }
+    }
+    private func sammlungName(fuer item: SidebarItem) -> String? {
+        if case .smartSammlung(let id) = item { return sammlung(id)?.name }
+        return nil
+    }
 
     @State private var papierkorb = PapierkorbManager()
 
@@ -123,9 +132,14 @@ struct ContentView: View {
                 pendingNeuesSnippet = false
             }
         }
-        .onChange(of: sidebarAuswahl) { _, _ in
+        .onChange(of: sidebarAuswahl) { _, neu in
             browserPfad.removeAll()   // Reingehen-Verlauf beim Wechsel zurücksetzen
-            suchtext = ""             // Suche pro Kategorie frisch (Tag-Klick setzt danach neu)
+            // Smart-Sammlung: deren gespeicherte Suche laden; sonst Suche leeren.
+            if case .smartSammlung(let id) = neu, let s = sammlung(id) {
+                suchtext = s.query
+            } else {
+                suchtext = ""
+            }
         }
         .onChange(of: papierkorb.zuletztGeloescht) { _, geloescht in
             // Gerade gelöschtes Snippet aus der Detailauswahl entfernen
@@ -181,6 +195,7 @@ struct ContentView: View {
         default:
             SnippetListView(
                 sidebarItem: item,
+                titelOverride: sammlungName(fuer: item),
                 selectedSnippet: $selectedSnippet,
                 addSnippetAnzeigen: $addSnippetAnzeigen,
                 tagFilter: $tagFilter,

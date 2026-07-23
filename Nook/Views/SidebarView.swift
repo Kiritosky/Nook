@@ -15,6 +15,7 @@ enum SidebarItem: Hashable {
     case projekt(String)
     case tag(String)
     case thema(String)
+    case smartSammlung(PersistentIdentifier)
     case papierkorb
     // Einstiegspunkte zum „Reingehen" (Bibliotheken) – keine Inline-Listen
     case projekteBrowser
@@ -39,12 +40,22 @@ enum BrowserZiel: Hashable {
 
 struct SidebarView: View {
     @Binding var auswahl: SidebarItem?
+    @Environment(\.modelContext) private var modelContext
     @Query(filter: #Predicate<Snippet> { $0.deletedAt == nil })
     private var alleSnippets: [Snippet]
     @Query(filter: #Predicate<Snippet> { $0.deletedAt != nil })
     private var papierkorbSnippets: [Snippet]
     @Query(sort: \CustomLanguage.name) private var customLanguages: [CustomLanguage]
     @Query(sort: \Projekt.name) private var projekte: [Projekt]
+    @Query(sort: \SmartSammlung.createdAt) private var sammlungen: [SmartSammlung]
+
+    /// Treffer einer Smart-Sammlung (Query via SucheParser gegen aktive Snippets).
+    private func sammlungTreffer(_ s: SmartSammlung) -> Int {
+        let (filter, freitext) = SucheParser.parse(s.query)
+        return alleSnippets.filter { snip in
+            filter.passt(snip) && (freitext.isEmpty || SucheParser.bewerte(snip, freitext: freitext) != nil)
+        }.count
+    }
 
 
     private func anzahl(_ item: SidebarItem) -> Int {
@@ -57,6 +68,9 @@ struct SidebarView: View {
         case .projekt(let proj):       return alleSnippets.filter { $0.project == proj }.count
         case .tag(let tag):            return alleSnippets.filter { $0.tags.contains(tag) }.count
         case .thema(let thema):        return alleSnippets.filter { $0.themen.contains(thema) }.count
+        case .smartSammlung(let id):
+            guard let s = sammlungen.first(where: { $0.persistentModelID == id }) else { return 0 }
+            return sammlungTreffer(s)
         case .papierkorb:              return papierkorbSnippets.count
         case .projekteBrowser:         return alleProjektNamen.count
         case .themenBrowser:           return alleThemen.count
@@ -150,6 +164,25 @@ struct SidebarView: View {
                             .tag(SidebarItem.tagsBrowser)
                     }
                 } header: { sectionHeader("Durchstöbern") }
+
+                // MARK: Smart-Sammlungen (gespeicherte Suchen)
+                if !sammlungen.isEmpty {
+                    Section {
+                        ForEach(sammlungen) { s in
+                            SidebarZeile(symbol: s.symbolName, farbe: s.farbe,
+                                         titel: s.name, anzahl: sammlungTreffer(s))
+                                .tag(SidebarItem.smartSammlung(s.persistentModelID))
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        if auswahl == .smartSammlung(s.persistentModelID) { auswahl = .alle }
+                                        modelContext.delete(s)
+                                    } label: {
+                                        Label("Sammlung löschen", systemImage: "trash")
+                                    }
+                                }
+                        }
+                    } header: { sectionHeader("Sammlungen") }
+                }
 
                 // MARK: Papierkorb
                 if !papierkorbSnippets.isEmpty {

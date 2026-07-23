@@ -24,7 +24,7 @@ struct NookApp: App {
     }
 
     var sharedModelContainer: ModelContainer = {
-        let schema = Schema([Snippet.self, CustomLanguage.self, Projekt.self])
+        let schema = Schema([Snippet.self, CustomLanguage.self, Projekt.self, SmartSammlung.self])
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
             return try ModelContainer(for: schema, configurations: [config])
